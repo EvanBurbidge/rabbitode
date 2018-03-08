@@ -1,10 +1,12 @@
 {
   "name": "rabbitmq-nodejs-interface",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A client wrapper to allow the usage of rabbitmq, amqplib with nodejs",
   "main": "dist/rabbit.client.js",
   "keywords": [
-    "rabbitmq", "amqplib", "amqp"
+    "rabbitmq",
+    "amqplib",
+    "amqp"
   ],
   "scripts": {
     "build": "tsc"
