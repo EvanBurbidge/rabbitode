@@ -14,10 +14,10 @@ var RabbitMqInterface = /** @class */ (function () {
         if (consumerHandler === void 0) { consumerHandler = function (msg) { return console.log(msg.content.toString()); }; }
         this.queueName = queueName;
         this.connectionUri = connectionUri;
+        this.consumerHandler = consumerHandler;
         this.offlinePubQueue = [];
         this.exchangeName = "";
         this.queue = this.queueName;
-        this.consumerHandler = consumerHandler;
         this.startRabbit();
     }
     /**
@@ -154,7 +154,5 @@ var RabbitMqInterface = /** @class */ (function () {
     };
     return RabbitMqInterface;
 }());
-module.exports = {
-    RabbitMqInterface: RabbitMqInterface
-};
+exports.RabbitMqInterface = RabbitMqInterface;
 //# sourceMappingURL=rabbit.client.js.map

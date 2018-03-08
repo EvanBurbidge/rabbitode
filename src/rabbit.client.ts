@@ -7,22 +7,20 @@ import * as amqp from 'amqplib/callback_api';
  *  amqplib and allows us to publish and send events to rabbit mq and digest
  *  those events
  * */
-class RabbitMqInterface {
+export class RabbitMqInterface {
 
   private queue: string;
   private connection: any;
   private pubChannel: any;
-  private consumerHandler: any;
   private offlinePubQueue: any[] = [];
   private exchangeName: string = ``;
 
   constructor(
     private queueName: string,
     private connectionUri: string,
-    consumerHandler = msg => console.log(msg.content.toString())
+    private consumerHandler = msg => console.log(msg.content.toString()),
   ) {
     this.queue = this.queueName;
-    this.consumerHandler = consumerHandler;
     this.startRabbit();
   }
 
@@ -166,7 +164,3 @@ class RabbitMqInterface {
     return true;
   }
 }
-
-module.exports = {
-  RabbitMqInterface: RabbitMqInterface
-};
