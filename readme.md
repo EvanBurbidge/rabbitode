@@ -4,14 +4,14 @@ In order to get this functionality I introduced RabbitMQ to my project. What sta
 for anyone who wishes to use it. 
 
 # Installation
-- Installation via npm `npm install rabbit-mq-interface`
+- Installation via npm `npm install rabbitode`
 - Feel free to fork this project and use it.
 
 # Api
 ## Creating a connection
 
 ```typescript 
-    import { RabbitMqInterface } from 'rabbitmq-nodejs-interface'; 
+    import { RabbitMqInterface } from 'rabbitode';
     const myConnection = new RabbitMqInterface(
             `myQueue`, 
             `amqp://localhost` 
