@@ -113,7 +113,7 @@ var RabbitMqInterface = /** @class */ (function () {
      * @description
      *  This will decode our buffer into an object, array, whatever it is.
      * */
-    RabbitMqInterface.prototype.decode = function (message) {
+    RabbitMqInterface.decode = function (message) {
         return JSON.parse(message.content.toString());
     };
     /**

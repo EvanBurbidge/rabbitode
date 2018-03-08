@@ -19,7 +19,7 @@ class RabbitMqInterface {
   constructor(
     private queueName: string,
     private connectionUri: string,
-    consumerHandler: Function = msg => console.log(msg.content.toString())
+    consumerHandler = msg => console.log(msg.content.toString())
   ) {
     this.queue = this.queueName;
     this.consumerHandler = consumerHandler;
@@ -124,7 +124,7 @@ class RabbitMqInterface {
    * @description
    *  This will decode our buffer into an object, array, whatever it is.
    * */
-  decode(message): any {
+  static decode (message): any {
     return JSON.parse(message.content.toString());
   }
 

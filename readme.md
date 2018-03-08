@@ -1,4 +1,4 @@
-# Rabbit MQ Interface
+# Rabbitmq Node JS Interface
 When working on a project I found that I had need of using Rabbit MQ between a number of difference microservices.
 In order to get this functionality I introduced RabbitMQ to my project. What started out as a small function became this class and now it's free
 for anyone who wishes to use it. 
@@ -11,7 +11,7 @@ for anyone who wishes to use it.
 ## Creating a connection
 
 ```typescript 
-    import { RabbitMqInterface } from 'rabbit-mq-interface'; 
+    import { RabbitMqInterface } from 'rabbitmq-nodejs-interface'; 
     const myConnection = new RabbitMqInterface(
             `myQueue`, 
             `amqp://localhost` 
