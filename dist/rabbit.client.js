@@ -94,6 +94,7 @@ var RabbitMqInterface = /** @class */ (function () {
     RabbitMqInterface.prototype.publish = function (content) {
         var _this = this;
         try {
+            console.log("[AMQP] sending to exchange: " + this.exchangeName + " queue: " + this.queueName);
             this.pubChannel.publish(this.exchangeName, this.queueName, new Buffer(JSON.stringify(content)), function (err) {
                 if (err) {
                     console.log("[AMQP] publish", err);

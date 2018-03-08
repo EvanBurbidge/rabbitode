@@ -101,6 +101,7 @@ class RabbitMqInterface {
    * */
   publish(content) {
     try {
+      console.log(`[AMQP] sending to exchange: ${this.exchangeName} queue: ${this.queueName}`);
       this.pubChannel.publish(
         this.exchangeName,
         this.queueName,
