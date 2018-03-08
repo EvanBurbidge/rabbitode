@@ -119,6 +119,14 @@ class RabbitMqInterface {
       this.offlinePubQueue.push([this.exchangeName, this.queueName, content]);
     }
   }
+  /**
+   * @method
+   * @description
+   *  This will decode our buffer into an object, array, whatever it is.
+   * */
+  decode(message): any {
+    return JSON.parse(message.content.toString());
+  }
 
   /**
    * @method
