@@ -12,23 +12,31 @@ import { to } from 'await-to-js';
 export class RabbitMqInterface {
 
   private connection: any;
+  private connectionUri: string;
   private exchange: any;
   private pubChannel: any;
   private offlinePubQueue: any[] = [];
+  private exchangeName: string;
+  private exchangeType: string;
+  private queueName: string;
+  private topicsList: string[];
+  private consumerCallback: (msg:any) => void;
 
-  constructor(private queueName: string,
-              private connectionUri: string,
-              private exchangeName: string,
-              private exchangeType: string = 'direct') {
-    this.setup();
-  }
+  async setup(config) {
+    this.queueName = config.queueName;
+    this.exchangeName = config.exchangeName;
+    this.exchangeType = config.exchangeType;
+    this.consumerCallback = config.consumerCallback;
+    this.connectionUri = config.connectionUri;
 
-  async setup() {
     let [err, data] = await to(this.startRabbit());
 
     if (err) {
       console.log(`[Rabbitode] oh no theres been a  problem`);
-      this.closeOnError({ message: `error` });
+      return this.closeOnError({ message: `error` });
+    } else {
+      console.log(`[Rabbitode] setup complete`);
+      return this;
     }
   }
 
@@ -94,7 +102,6 @@ export class RabbitMqInterface {
   startPublisher() {
     this.connection
       .createConfirmChannel((err, ch) => {
-
         console.log(`[Rabbitode] setting up publisher`);
         if (this.closeOnError(err)) return;
 
@@ -112,7 +119,7 @@ export class RabbitMqInterface {
                 { durable: false },
               );
         }
-
+        this.publish({ msg: ' im testing' });
         while (true) {
           const m = this.offlinePubQueue.shift();
           if (!m) break;
@@ -132,19 +139,20 @@ export class RabbitMqInterface {
   publish(content) {
     try {
       console.log(`[Rabbitode] sending to exchange: ${this.exchangeName} queue: ${this.queueName}`);
-      this.pubChannel.publish(
-        this.exchangeName,
-        this.queueName,
-        new Buffer(JSON.stringify(content)),
-        (err) => {
-          if (err) {
-            console.log(`[Rabbitode] publish`, err);
-            this.offlinePubQueue.push([this.exchangeName, this.queueName, content]);
-            this.pubChannel.connection.close();
-          }
-          console.log(`[Rabbitode] published`);
-        },
-      );
+      this.pubChannel
+        .publish(
+          this.exchangeName,
+          this.queueName,
+          new Buffer(JSON.stringify(content)),
+          (err) => {
+            if (err) {
+              console.log(`[Rabbitode] publish`, err);
+              this.offlinePubQueue.push([this.exchangeName, this.queueName, content]);
+              this.pubChannel.connection.close();
+            }
+            console.log(`[Rabbitode] published`);
+          },
+        );
     } catch (e) {
       console.log(`[Rabbitode] publish failure reason: `, e.message);
       this.offlinePubQueue.push([this.exchangeName, this.queueName, content]);
@@ -189,12 +197,12 @@ export class RabbitMqInterface {
       this.connection
         .createConfirmChannel((err, ch) => {
           if (this.closeOnError(err)) return;
+
           this.pubChannel = ch;
           this.pubChannel.on('error', err => console.error('[Rabbitode] channel error', err.message));
           this.pubChannel.on('close', () => console.log('[Rabbitode] channel closed'));
           this.pubChannel.prefetch(prefetchCount);
           this.pubChannel.assertQueue(this.queueName, { ...queueConfigs }, (err) => {
-
             console.log(`[Rabbitode] setting up exchange`);
             this.pubChannel
               .bindQueue(
