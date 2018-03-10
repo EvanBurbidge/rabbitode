@@ -1,4 +1,6 @@
 import * as amqp from 'amqplib/callback_api';
+import { to } from 'await-to-js';
+
 /**
  * @class
  * @name RabbigMqInterface
@@ -14,18 +16,20 @@ export class RabbitMqInterface {
   private pubChannel: any;
   private offlinePubQueue: any[] = [];
 
-  constructor(
-    private queueName: string,
-    private connectionUri: string,
-    private exchangeName: string,
-    private exchangeType: string = 'direct',
-  ) {
+  constructor(private queueName: string,
+              private connectionUri: string,
+              private exchangeName: string,
+              private exchangeType: string = 'direct') {
     this.setup();
   }
 
-  async setup () {
-    await this.startRabbit();
-    this.startPublisher();
+  async setup() {
+    let [err, data] = await to(this.startRabbit());
+
+    if (err) {
+      console.log(`[Rabbitode] oh no theres been a  problem`);
+      this.closeOnError({ message: `error` });
+    }
   }
 
   /**
@@ -46,6 +50,7 @@ export class RabbitMqInterface {
           this.connection = conn;
           this.connection.on('error', err => this.handleRabbitErrror(err));
           this.connection.on('close', () => this.handleRabbitClose());
+          this.startPublisher();
           resolve();
         }
       );
@@ -60,7 +65,7 @@ export class RabbitMqInterface {
    * */
   handleRabbitErrror(err) {
     if (err.message !== 'Connection closing') {
-      console.error('[AMQP] conn error', err.message);
+      console.error('[Rabbitode] conn error', err.message);
     }
   }
 
@@ -71,8 +76,13 @@ export class RabbitMqInterface {
    *  This will handleRabbitClose
    * */
   handleRabbitClose() {
-    console.log(`[AMQP] Restarting`);
-    return setTimeout(() => this.startRabbit(), 1000);
+    console.log(`[Rabbitode] Restarting`);
+    return setTimeout(async () => {
+      let [err, data] = await to(this.startRabbit());
+      if (err) {
+        this.handleRabbitClose();
+      }
+    }, 1000);
   }
 
   /**
@@ -83,27 +93,33 @@ export class RabbitMqInterface {
    * */
   startPublisher() {
     this.connection
-      .createChannel((err, ch) => {
-      if (this.closeOnError(err)) return;
-      this.pubChannel = ch;
-      this.pubChannel.on('error', err => console.log(err));
-      this.pubChannel.on('close', () => console.log(`CHANNEL IS CLOSING`));
+      .createConfirmChannel((err, ch) => {
 
-      if (this.exchangeName.length > 0) {
-        this.exchange =
-          this.pubChannel
-          .assertExchange(
-            this.exchangeName,
-            this.exchangeType,
-            { durable: false },
-          );
-      }
-      while (true) {
-        const m = this.offlinePubQueue.shift();
-        if (!m) break;
-        this.publish(m[2]);
-      }
-    });
+        console.log(`[Rabbitode] setting up publisher`);
+        if (this.closeOnError(err)) return;
+
+        this.pubChannel = ch;
+        this.pubChannel.on('error', err => console.log(err));
+        this.pubChannel.on('close', () => console.log(`CHANNEL IS CLOSING`));
+
+        if (this.exchangeName.length > 0) {
+          console.log(`[Rabbitode] setting up exchange`);
+          this.exchange =
+            this.pubChannel
+              .assertExchange(
+                this.exchangeName,
+                this.exchangeType,
+                { durable: false },
+              );
+        }
+
+        while (true) {
+          const m = this.offlinePubQueue.shift();
+          if (!m) break;
+          this.publish(m[2]);
+        }
+
+      });
   }
 
   /**
@@ -115,31 +131,41 @@ export class RabbitMqInterface {
    * */
   publish(content) {
     try {
-      console.log(`[AMQP] sending to exchange: ${this.exchangeName} queue: ${this.queueName}`);
+      console.log(`[Rabbitode] sending to exchange: ${this.exchangeName} queue: ${this.queueName}`);
       this.pubChannel.publish(
         this.exchangeName,
         this.queueName,
         new Buffer(JSON.stringify(content)),
         (err) => {
           if (err) {
-            console.log(`[AMQP] publish`, err);
+            console.log(`[Rabbitode] publish`, err);
             this.offlinePubQueue.push([this.exchangeName, this.queueName, content]);
             this.pubChannel.connection.close();
           }
-          console.log(`[AMQP] published`);
+          console.log(`[Rabbitode] published`);
         },
       );
     } catch (e) {
-      console.log(`[AMQP] publish`, e.message);
+      console.log(`[Rabbitode] publish failure reason: `, e.message);
       this.offlinePubQueue.push([this.exchangeName, this.queueName, content]);
     }
   }
+
   /**
    * @method
    * @description
    *  This will decode our buffer into an object, array, whatever it is.
    * */
-  static decode (message): any {
+  decodeToString(message): string {
+    return message.content.toString();
+  }
+
+  /**
+   * @method
+   * @description
+   *  This will decode our buffer into an object, array, whatever it is.
+   * */
+  decodeToJson(message): any {
     return JSON.parse(message.content.toString());
   }
 
@@ -147,24 +173,45 @@ export class RabbitMqInterface {
    * @method
    * @description
    *  this will start a consumer that will ack a message if processed
+   * @param { Function } consumerHandler this is what digests the messages from your queue. You implement this yourself
+   * @param { Number } prefetchCount when our consumer loads this will allow us to see an amount of messages on load
+   * @param { Object } queueConfigs this is a small configuration object for our queues.
+   * @param { Object } consumeConfig this is a small configuration that tell us what we should do when we consume our features
    * */
-  startConsumer( consumerHandler = msg => console.log(msg.content.toString())) {
-    this.connection.createChannel((err, ch) => {
-      if (this.closeOnError(err)) return;
-      this.pubChannel = ch;
-      this.pubChannel.on('error', err => console.error('[AMQP] channel error', err.message));
-      this.pubChannel.on('close', () => console.log('[AMQP] channel closed'));
-      this.pubChannel.prefetch(10);
-      this.pubChannel.assertQueue(this.queueName, { exclusive: true }, (err) => {
-        if (this.closeOnError(err)) return;
-        this.pubChannel.consume(
-          this.queueName,
-          consumerHandler(this.pubChannel),
-          { noAck: false },
-        );
-        console.log('[AMQP] Worker is started');
-      });
-    });
+  public async startConsumer(consumerHandler = msg => this.decodeToString(msg),
+                             prefetchCount: number = 10,
+                             queueConfigs = { exclusive: false },
+                             consumeConfig = { noAck: false }) {
+    let [err, data] = await to(this.startRabbit());
+    if (err) {
+      this.handleRabbitClose();
+    } else {
+      this.connection
+        .createConfirmChannel((err, ch) => {
+          if (this.closeOnError(err)) return;
+          this.pubChannel = ch;
+          this.pubChannel.on('error', err => console.error('[Rabbitode] channel error', err.message));
+          this.pubChannel.on('close', () => console.log('[Rabbitode] channel closed'));
+          this.pubChannel.prefetch(prefetchCount);
+          this.pubChannel.assertQueue(this.queueName, { ...queueConfigs }, (err) => {
+
+            console.log(`[Rabbitode] setting up exchange`);
+            this.pubChannel
+              .bindQueue(
+                this.queueName,
+                this.exchangeName,
+              );
+
+            if (this.closeOnError(err)) return;
+            this.pubChannel.consume(
+              this.queueName,
+              consumerHandler(this.pubChannel),
+              { ...consumeConfig },
+            );
+            console.log(`[Rabbitode] Consumer is started at ${this.exchangeName}: ${this.queueName}`);
+          });
+        });
+    }
   }
 
   /**
@@ -175,7 +222,7 @@ export class RabbitMqInterface {
    * */
   closeOnError(err) {
     if (!err) return err;
-    console.log(`[FATAL AMQP ERROR CLOSING]`, err);
+    console.log(`[FATAL RABBITODE ERROR CLOSING]`, err);
     this.connection.close();
     return true;
   }

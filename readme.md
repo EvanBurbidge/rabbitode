@@ -17,7 +17,12 @@ for anyone who wishes to use it.
             `amqp://localhost` 
     );
     
-    myConnection.startConsumer(queueProcessingFunction);
+    myConnection.startConsumer(
+        queueProcessingFunction,
+        10,
+        { exclusive: true },
+        { noAck: false },
+    );
 ``` 
 
 ## Sending a message

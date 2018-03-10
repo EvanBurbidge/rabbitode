@@ -9,7 +9,8 @@
     "amqp"
   ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "watch": "tsc -w"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,8 @@
   "author": "EvanB54",
   "license": "ISC",
   "dependencies": {
-    "amqplib": "^0.5.2"
+    "amqplib": "^0.5.2",
+    "await-to-js": "^2.0.1"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.6",
