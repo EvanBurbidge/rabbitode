@@ -1,0 +1,1 @@
+import {RabbitMqInterface} from "../../dist/rabbit.client";

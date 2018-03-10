@@ -9,19 +9,23 @@ import * as amqp from 'amqplib/callback_api';
  * */
 export class RabbitMqInterface {
 
-  private queue: string;
   private connection: any;
+  private exchange: any;
   private pubChannel: any;
   private offlinePubQueue: any[] = [];
-  private exchangeName: string = ``;
 
   constructor(
     private queueName: string,
     private connectionUri: string,
-    private consumerHandler = msg => console.log(msg.content.toString()),
+    private exchangeName: string,
+    private exchangeType: string = 'direct',
   ) {
-    this.queue = this.queueName;
-    this.startRabbit();
+    this.setup();
+  }
+
+  async setup () {
+    await this.startRabbit();
+    this.startPublisher();
   }
 
   /**
@@ -31,20 +35,21 @@ export class RabbitMqInterface {
    * and the recursively anytime we have an error
    * */
   startRabbit() {
-    amqp.connect(
-      this.connectionUri,
-      (err, conn) => {
-        if (err) {
-          return this.handleRabbitClose();
+    return new Promise((resolve, reject) => {
+      amqp.connect(
+        this.connectionUri,
+        (err, conn) => {
+          if (err) {
+            reject();
+            return this.handleRabbitClose();
+          }
+          this.connection = conn;
+          this.connection.on('error', err => this.handleRabbitErrror(err));
+          this.connection.on('close', () => this.handleRabbitClose());
+          resolve();
         }
-        this.connection = conn;
-        this.connection.on('error', err => this.handleRabbitErrror(err));
-        this.connection.on('close', () => this.handleRabbitClose());
-        console.log(`[AMQP] connection established`, this.queue);
-        this.startPublisher();
-        this.startConsumer();
-      },
-    );
+      );
+    })
   }
 
   /**
@@ -77,11 +82,22 @@ export class RabbitMqInterface {
    *  rabbit mq
    * */
   startPublisher() {
-    this.connection.createConfirmChannel((err, ch) => {
+    this.connection
+      .createChannel((err, ch) => {
       if (this.closeOnError(err)) return;
       this.pubChannel = ch;
       this.pubChannel.on('error', err => console.log(err));
       this.pubChannel.on('close', () => console.log(`CHANNEL IS CLOSING`));
+
+      if (this.exchangeName.length > 0) {
+        this.exchange =
+          this.pubChannel
+          .assertExchange(
+            this.exchangeName,
+            this.exchangeType,
+            { durable: false },
+          );
+      }
       while (true) {
         const m = this.offlinePubQueue.shift();
         if (!m) break;
@@ -132,18 +148,18 @@ export class RabbitMqInterface {
    * @description
    *  this will start a consumer that will ack a message if processed
    * */
-  startConsumer() {
+  startConsumer( consumerHandler = msg => console.log(msg.content.toString())) {
     this.connection.createChannel((err, ch) => {
       if (this.closeOnError(err)) return;
       this.pubChannel = ch;
       this.pubChannel.on('error', err => console.error('[AMQP] channel error', err.message));
       this.pubChannel.on('close', () => console.log('[AMQP] channel closed'));
       this.pubChannel.prefetch(10);
-      this.pubChannel.assertQueue(this.queue, { durable: true }, (err) => {
+      this.pubChannel.assertQueue(this.queueName, { exclusive: true }, (err) => {
         if (this.closeOnError(err)) return;
         this.pubChannel.consume(
-          this.queue,
-          this.consumerHandler(this.pubChannel),
+          this.queueName,
+          consumerHandler(this.pubChannel),
           { noAck: false },
         );
         console.log('[AMQP] Worker is started');

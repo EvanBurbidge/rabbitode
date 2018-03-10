@@ -15,8 +15,9 @@ for anyone who wishes to use it.
     const myConnection = new RabbitMqInterface(
             `myQueue`, 
             `amqp://localhost` 
-             queueProcessingFunction(),
     );
+    
+    myConnection.startConsumer(queueProcessingFunction);
 ``` 
 
 ## Sending a message
