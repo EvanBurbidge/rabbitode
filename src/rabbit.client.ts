@@ -11,33 +11,41 @@ import { to } from 'await-to-js';
  * */
 export class RabbitMqInterface {
 
-  private connection: any;
-  private connectionUri: string;
-  private exchange: any;
-  private pubChannel: any;
-  private offlinePubQueue: any[] = [];
-  private exchangeName: string;
-  private exchangeType: string;
-  private queueName: string;
-  private topicsList: string[];
-  private consumerCallback: (msg:any) => void;
+  public connection: any;
+  public connectionUri: string;
+  public exchange: any;
+  public pubChannel: any;
+  public offlinePubQueue: any[] = [];
+  public exchangeName: string;
+  public exchangeType: string;
+  public queueName: string;
+  public topicsList: string[];
+  public consumerCallback: (msg:any) => void = msg => console.log(msg);
 
-  async setup(config) {
-    this.queueName = config.queueName;
-    this.exchangeName = config.exchangeName;
-    this.exchangeType = config.exchangeType;
-    this.consumerCallback = config.consumerCallback;
-    this.connectionUri = config.connectionUri;
+  constructor (userConfig: any) {
+    this.setup(userConfig);
+  }
 
-    let [err, data] = await to(this.startRabbit());
-
-    if (err) {
-      console.log(`[Rabbitode] oh no theres been a  problem`);
-      return this.closeOnError({ message: `error` });
-    } else {
-      console.log(`[Rabbitode] setup complete`);
-      return this;
-    }
+  setup(config):Promise<any> {
+    return new Promise(async (resolve, reject) => {
+      this.queueName = config.queueName;
+      this.exchangeName = config.exchangeName;
+      this.exchangeType = config.exchangeType;
+      this.consumerCallback = config.consumerCallback;
+      this.connectionUri = config.connectionUri;
+      let [err, data] = await to(this.startRabbit());
+      if (err) {
+        reject();
+        console.log(`[Rabbitode] oh no theres been a  problem`);
+        return this.closeOnError({ message: `error` });
+      } else {
+        resolve();
+        this.startConsumer(config.consumerCallback);
+        this.startPublisher();
+        console.log(`[Rabbitode] setup complete`);
+        return this;
+      }
+    })
   }
 
   /**
@@ -235,3 +243,5 @@ export class RabbitMqInterface {
     return true;
   }
 }
+
+module.exports.RabbigMqInterface = RabbitMqInterface;
