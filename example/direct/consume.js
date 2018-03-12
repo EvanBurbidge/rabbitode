@@ -1,4 +1,4 @@
-let {RabbitMqInterface} = require('../../dist/rabbitode');
+let {RabbitMqInterface} = require('../../dist/rabbitode.min');
 
 
 const rabbitInterface = new RabbitMqInterface();
