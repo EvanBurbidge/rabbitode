@@ -2,14 +2,14 @@
   "name": "rabbitode",
   "version": "1.0.0",
   "description": "A client wrapper to allow the usage of rabbitmq, amqplib with nodejs",
-  "main": "dist/rabbit.client.js",
+  "main": "dist/rabbitode.min.js",
   "keywords": [
     "rabbitmq",
     "amqplib",
     "amqp"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && gulp",
     "watch": "tsc -w"
   },
   "repository": {
@@ -29,6 +29,14 @@
   "devDependencies": {
     "@types/amqplib": "^0.5.6",
     "@types/express": "^4.11.1",
-    "@types/node": "^9.4.6"
+    "@types/node": "^9.4.6",
+    "gulp": "^3.9.1",
+    "gulp-minify": "^2.1.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^3.0.0",
+    "pump": "^3.0.0",
+    "tslint": "^5.9.1",
+    "tslint-config-airbnb": "^5.7.0",
+    "typescript": "^2.7.2"
   }
 }
