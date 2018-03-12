@@ -1,6 +1,5 @@
 let {RabbitMqInterface} = require('../../dist/rabbitode');
-let express  = require('express');
-let app = express();
+
 
 const rabbitInterface = new RabbitMqInterface();
 
@@ -19,6 +18,3 @@ function handleConsume (channel) {
         console.log('************************************************************');
     }
 }
-
-
-app.listen(4001, () => console.log('listening on 4001'));
