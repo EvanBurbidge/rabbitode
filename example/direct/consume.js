@@ -2,8 +2,9 @@ let {RabbitMqInterface} = require('../../dist/rabbitode.min');
 
 
 const rabbitInterface = new RabbitMqInterface();
-
-rabbitInterface.startDirectConsumer({
+rabbitInterface
+  .enableDebugging()
+  .startDirectConsumer({
     exchangeName: 'direct_test_exchange',
     exchangeType: 'direct',
     queueName: 'direct_test_queue',
