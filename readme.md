@@ -78,11 +78,45 @@ myConnection.send({
     }
 }, 'topic');
 ```
-
-## Serializing a message
-Every message is sent in a Buffer data type. This will allow us to turn it into an object
+## Receiving a message
+#### Direct
 ```typescript
-  const decoded = myConnection.decode(message.content);
+myConnection.startDirectConsumer({
+    exchangeName: 'direct_test_exchange',
+    queueName: 'direct_test_queue',
+    consumerCallback: channel => msg => {
+      console.log(myConnection.decodeToJson(msg));
+      channel.ack(msg);
+    },
+});
+```
+
+#### Fanout
+```typescript
+myConnection.startFanoutConsumer({
+    exchangeName: 'fanout_test_exchange',
+    queueName: '',
+    consumerCallback: channel => msg => {
+      // set multiple woekers to test
+      console.log('******************** WORKER {ID} ************************') 
+      console.log(myConnection.decodeToJson(msg));
+      channel.ack(msg);
+    },
+});
+```
+#### topic
+```typescript
+const myTopics = ['test.*', '*.test'];
+myConnection.startTopicConsumer({
+    exchangeName: 'topic_test_exchange',
+    queueName: '',
+    consumerCallback: channel => msg => {
+      // set multiple woekers to test
+      console.log('******************** WORKER {ID} ************************') 
+      console.log(myConnection.decodeToJson(msg));
+      channel.ack(msg);
+    },
+}, myTopics);
 ```
 
 

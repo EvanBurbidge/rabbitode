@@ -143,7 +143,7 @@ export class RabbitMqInterface {
    *  This will allow us to consume various sorts of queues, it MUST take a
    *  consumer call back param
    * */
-  async startConsumer({ exchangeName, exchangeType, queueName = ``, consumerCallback }, topics: string[] = []) {
+  async startConsumer({ exchangeName = ``, exchangeType = `direct`, queueName = ``, consumerCallback }, topics: string[] = []) {
     try {
       const conn = await this.startRabbit();
       try {
