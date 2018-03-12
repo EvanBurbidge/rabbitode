@@ -42,8 +42,8 @@ export class RabbitMqInterface {
    * @description
    *  description here
    * */
-  setRabbitUri (uri: string):void {
-      this.connectionUri = uri;
+  setRabbitUri(uri: string): void {
+    this.connectionUri = uri;
   }
 
   /**
@@ -52,19 +52,20 @@ export class RabbitMqInterface {
    * @description
    *  if this is called we will see debugging statements.
    * */
-  enableDebugging () {
-      this.debug = true;
-      return this;
+  enableDebugging() {
+    this.debug = true;
+    return this;
   }
+
   /**
    * @method
    * @name disableDebugging
    * @description
    *  if this is called we will not debugging statements.
    * */
-  disableDebugging () {
-      this.debug = false;
-      return this;
+  disableDebugging() {
+    this.debug = false;
+    return this;
   }
 
 
@@ -86,24 +87,28 @@ export class RabbitMqInterface {
    * @param {Object} messageConfig - the configuration of the message to be sent
    * @param {String} exchangeType - this is the type e.g. direct, fanout, topic
    * */
-  async publishToExchange({ exchangeName, routingKey, content }, exchangeType) {
+  async publishToExchange({ exchangeName, routingKey, content },
+                          exchangeType: string,
+                          configs: any = {
+                            exchange: { durable: false },
+                            channel: { persistent: true },
+                          }): Promise<any> {
     try {
       const conn = await this.startRabbit();
       this.logger(`[Rabbitode] creating channel`);
       try {
         const channel = await conn.createConfirmChannel();
         this.logger(`[Rabbitode] asserting exchange,  exchangeType: ${exchangeType}`);
-        await channel.assertExchange(exchangeName, exchangeType, { durable: false });
+        await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
         this.logger(`[Rabbitode] publishing message`);
         let published = await channel.publish(exchangeName, routingKey, this.bufferIfy(content),
-          { persistent: true },
-          (err, ok) => {
-            if (err) {
-              this.logger(`[Rabbitode] there was a problem ${err}`, 'error');
-            }
-          });
+          { ...configs.channel },
+          (err) => err ?
+            this.logger(`[Rabbitode] there was a problem ${err}`, 'error') :
+            this.logger(`[Rabbitode] message sent`));
+
         this.logger(`[Rabbitode] message published: ${published}`);
-        setTimeout(async () => {
+        setTimeout(async() => {
           this.logger(`[Rabbitode] closing channel`);
           await channel.close();
           this.logger(`[Rabbitode] closing connection`);
@@ -166,18 +171,30 @@ export class RabbitMqInterface {
    *  This will allow us to consume various sorts of queues, it MUST take a
    *  consumer call back param
    * */
-  async startConsumer({ exchangeName = ``, exchangeType = `direct`, queueName = ``, consumerCallback }, topics: string[] = []) {
+  async startConsumer({ exchangeName = ``, exchangeType = `direct`, queueName = ``, consumerCallback },
+                      configs: any = {
+                        exchange: {
+                          durable: false,
+                        },
+                        queue: {
+                          exclusive: false,
+                        },
+                        consumer: {
+                          noAck: false,
+                        }
+                      },
+                      topics: string[] = []) {
     try {
       const conn = await this.startRabbit();
       try {
         const channel = await conn.createChannel();
         this.logger('[Rabbitode] asserting exchange');
-        await channel.assertExchange(exchangeName, exchangeType, { durable: false });
+        await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
         this.logger('[Rabbitode] asserting queue');
-        const queue = await channel.assertQueue(queueName, { exclusive: exchangeType !== 'direct' });
+        const queue = await channel.assertQueue(queueName, { ...configs.queue });
         if (topics.length > 0) {
           this.logger('[Rabbitode] binding topics to queue');
-          topics.forEach(async (topic) => {
+          topics.forEach(async(topic) => {
             this.logger(`[Rabbitode] topic:`, topic);
             await channel.bindQueue(queue.queue, exchangeName, topic)
           });
@@ -188,7 +205,7 @@ export class RabbitMqInterface {
         this.logger(`[Rabbitode] prefetching`);
         await channel.prefetch(10);
         this.logger(`[Rabbitode] consuming messages`);
-        await channel.consume(queue.queue, consumerCallback(channel), { noAck: false });
+        await channel.consume(queue.queue, consumerCallback(channel), { ...configs.consumer });
         this.logger(`[Rabbitode] waiting on more messages`)
       } catch (e) {
         this.logger(`[Rabbitode] consumer channel error ${e}`, 'error');
@@ -278,7 +295,7 @@ export class RabbitMqInterface {
    * */
   handleRabbitClose() {
     this.logger(`[Rabbitode] Restarting`, 'warn');
-    return setTimeout(async () => this.startRabbit(), 1000);
+    return setTimeout(async() => this.startRabbit(), 1000);
   }
 
   /**
@@ -319,7 +336,7 @@ export class RabbitMqInterface {
    *  This will either log or not log messages depending
    *  on a debug flag set by users
    * */
-  logger (message: string, level: string = 'log'): void {
+  logger(message: string, level: string = 'log'): void {
     if (this.debug) {
       switch (level) {
         case 'warning':

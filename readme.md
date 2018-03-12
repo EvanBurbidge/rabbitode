@@ -55,7 +55,15 @@ myConnection.send({
     content: {
       message: `this is a direct test message`
     }
-}, 'direct');
+}, 'direct',
+ {
+    exchange: {
+        durable: false
+    },
+    channel: {
+        persistent: true
+    }
+});
 ```
 #### Send Fanout
 ```typescript
@@ -66,7 +74,14 @@ myConnection.send({
     content: {
       message: `this is a fanout test message which should be received by multiple consumers`
     }
-}, 'fanout');
+}, 'fanout', {
+ exchange: {
+     durable: false
+ },
+ channel: {
+     persistent: true
+ }
+});
 ```
 #### Send Topic
 ```typescript
@@ -76,7 +91,14 @@ myConnection.send({
     content: {
       message: `this is a fanout test message which should be received by multiple consumers`
     }
-}, 'topic');
+}, 'topic', {
+ exchange: {
+     durable: false
+ },
+ channel: {
+     persistent: true
+ }
+});
 ```
 #### Consumer Direct
 ```typescript
@@ -87,6 +109,16 @@ myConnection.startDirectConsumer({
       console.log(myConnection.decodeToJson(msg));
       channel.ack(msg);
     },
+}, {
+    exchange: {
+        durable: false
+    },
+    queue: {
+        exclusive: false
+    },
+    consumer: {
+        noAck: false
+    }
 });
 ```
 
@@ -101,7 +133,17 @@ myConnection.startFanoutConsumer({
       console.log(myConnection.decodeToJson(msg));
       channel.ack(msg);
     },
-});
+}, {
+     exchange: {
+         durable: false
+     },
+     queue: {
+         exclusive: false
+     },
+     consumer: {
+         noAck: false
+     }
+ });
 ```
 #### Consumer topic
 ```typescript
@@ -115,7 +157,18 @@ myConnection.startTopicConsumer({
       console.log(myConnection.decodeToJson(msg));
       channel.ack(msg);
     },
-}, myTopics);
+}, {
+   exchange: {
+       durable: false
+   },
+   queue: {
+       exclusive: false
+   },
+   consumer: {
+       noAck: false
+   }
+},
+ myTopics);
 ```
 
 #### Set custom uri
