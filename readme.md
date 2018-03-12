@@ -157,7 +157,9 @@ myConnection.startTopicConsumer({
       console.log(myConnection.decodeToJson(msg));
       channel.ack(msg);
     },
-}, {
+},
+myTopics,
+{
    exchange: {
        durable: false
    },
@@ -167,8 +169,7 @@ myConnection.startTopicConsumer({
    consumer: {
        noAck: false
    }
-},
- myTopics);
+});
 ```
 
 #### Set custom uri

@@ -99,16 +99,14 @@ export class RabbitMqInterface {
       this.logger(`[Rabbitode] creating channel`);
       try {
         const channel = await conn.createConfirmChannel();
-        this.logger(`[Rabbitode] asserting exchange,  exchangeType: ${exchangeType}`);
+        this.logger(`[Rabbitode] asserting exchange: ${exchangeName},  exchangeType: ${exchangeType}`);
         await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
         this.logger(`[Rabbitode] publishing message`);
-        let published = await channel.publish(exchangeName, routingKey, this.bufferIfy(content),
+        await channel.publish(exchangeName, routingKey, this.bufferIfy(content),
           { ...configs.channel },
           (err) => err ?
             this.logger(`[Rabbitode] there was a problem ${err}`, 'error') :
             this.logger(`[Rabbitode] message sent`));
-
-        this.logger(`[Rabbitode] message published: ${published}`);
         setTimeout(async() => {
           this.logger(`[Rabbitode] closing channel`);
           await channel.close();
@@ -198,10 +196,7 @@ export class RabbitMqInterface {
         const queue = await channel.assertQueue(queueName, { ...configs.queue });
         if (topics.length > 0) {
           this.logger('[Rabbitode] binding topics to queue');
-          topics.forEach(async(topic) => {
-            this.logger(`[Rabbitode] topic:`, topic);
-            await channel.bindQueue(queue.queue, exchangeName, topic)
-          });
+          await this.mapTopics(channel, queue.queue, exchangeName, topics);
         } else {
           this.logger('[Rabbitode] binding queue to exchange');
           await channel.bindQueue(queue.queue, exchangeName, queue.queue);
@@ -221,16 +216,29 @@ export class RabbitMqInterface {
 
   /**
    * @method
+   * @name mapTopics
+   * @description
+   *  If we have topics well need to map them and await the promise
+   * */
+  mapTopics (channel: any, queue, exchangeName: string, topics: string[]): Promise<any> {
+    return new Promise((resolve) => {
+      let newTopics = topics.map(async (topic) => await channel.bindQueue(queue, exchangeName, topic));
+      resolve(newTopics);
+    })
+  }
+
+  /**
+   * @method
    * @name startDirectConsumer
    * @description
    *  this will allow us to start a direct consumer
    * @param {Object} consumerConfig - this is the config for our exchange name and other fields
    * */
-  startDirectConsumer(consumerConfig: ConsumerConfig) {
+  startDirectConsumer(consumerConfig: ConsumerConfig, configs?) {
     return this.startConsumer({
       ...consumerConfig,
       exchangeType: 'direct'
-    })
+    }, configs);
   }
 
   /**
@@ -240,11 +248,11 @@ export class RabbitMqInterface {
    *  this will allow us to start a fanout consumer
    * @param {Object} consumerConfig - this is the config for our exchange name and other fields
    * */
-  startFanoutConsumer(consumerConfig: ConsumerConfig) {
+  startFanoutConsumer(consumerConfig: ConsumerConfig, configs?) {
     return this.startConsumer({
       ...consumerConfig,
       exchangeType: 'fanout'
-    })
+    }, configs)
   }
 
   /**
@@ -255,11 +263,11 @@ export class RabbitMqInterface {
    * @param {Object} consumerConfig - this is the config for our exchange name and other fields
    * @param {Array} topics - this is a list of topics we want the queue to listen for
    * */
-  startTopicConsumer(consumerConfig: ConsumerConfig, topics: string[]) {
+  startTopicConsumer(consumerConfig: ConsumerConfig, topics: string[], configs?) {
     return this.startConsumer({
       ...consumerConfig,
       exchangeType: 'topic'
-    }, topics);
+    }, configs, topics);
   }
 
   /**
