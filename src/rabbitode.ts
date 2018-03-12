@@ -1,5 +1,3 @@
-import { to } from 'await-to-js';
-
 const amqp = require('amqplib');
 
 interface MqExchangeMessage {
@@ -22,7 +20,7 @@ interface ConsumerConfig {
 
 /**
  * @class
- * @name RabbigMqInterface
+ * @name RabbitMqInterface
  * @description
  *  This class provides us a number of methods for dealing with connecting to
  *  amqplib and allows us to publish and send events to rabbit mq and digest
@@ -294,4 +292,4 @@ export class RabbitMqInterface {
   }
 }
 
-module.exports.RabbigMqInterface = RabbitMqInterface;
+module.exports.RabbitMqInterface = RabbitMqInterface;
