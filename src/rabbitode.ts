@@ -39,6 +39,16 @@ export class RabbitMqInterface {
 
   /**
    * @method
+   * @name setRabbitUri
+   * @description
+   *  description here
+   * */
+  setRabbitUri (uri: string):void {
+      this.connectionUri = uri;
+  }
+
+  /**
+   * @method
    * @description
    * this method is called once upon start up
    * and the recursively anytime we have an error
@@ -60,14 +70,13 @@ export class RabbitMqInterface {
       const conn = await this.startRabbit();
       console.log(`[Rabbitode] creating channel`);
       try {
-
         const channel = await conn.createConfirmChannel();
         console.log(`[Rabbitode] asserting exchange,  exchangeType: ${exchangeType}`);
         await channel.assertExchange(exchangeName, exchangeType, { durable: false });
         console.log(`[Rabbitode] publishing message`);
         console.log(`exchange: ${exchangeName}`);
         console.log(`routing: ${routingKey}`);
-        let published = await channel.publish(exchangeName, routingKey, new Buffer(content),
+        let published = await channel.publish(exchangeName, routingKey, this.bufferIfy(content),
           { persistent: true },
           (err, ok) => {
             if (err) {
@@ -225,9 +234,9 @@ export class RabbitMqInterface {
       typeof content !== 'string' &&
       typeof content == 'object'
     ) {
-      content = JSON.parse(content);
+      content = JSON.stringify(content);
     }
-    return Buffer.from(content);
+    return new Buffer(content);
   }
 
   /**
