@@ -72,16 +72,14 @@ export class RabbitMqInterface {
         console.log(`[Rabbitode] asserting exchange,  exchangeType: ${exchangeType}`);
         await channel.assertExchange(exchangeName, exchangeType, { durable: false });
         console.log(`[Rabbitode] publishing message`);
-        console.log(`exchange: ${exchangeName}`);
-        console.log(`routing: ${routingKey}`);
         let published = await channel.publish(exchangeName, routingKey, this.bufferIfy(content),
           { persistent: true },
           (err, ok) => {
             if (err) {
-              console.log(`[rabbitode] there was a problem`);
+              console.error(`[rabbitode] there was a problem`);
             }
           });
-        console.log(`[Rabbitode]`, published);
+        console.log(`[Rabbitode] message published: `, published);
         setTimeout(async () => {
           console.log(`[Rabbitode] closing channel`);
           await channel.close();
@@ -89,14 +87,11 @@ export class RabbitMqInterface {
           await conn.close();
         }, 2500);
       } catch (e) {
-        console.log(`[Rabbitode] channel error`);
-        console.log(e)
+        console.error(`[Rabbitode] channel error`, e);
       }
-
     } catch (e) {
-      console.log(`[Rabbitode] connection error`);
+      console.error(`[Rabbitode] connection error`);
     }
-
   }
 
   /**
@@ -170,10 +165,10 @@ export class RabbitMqInterface {
         await channel.consume(queue.queue, consumerCallback(channel), { noAck: false });
         console.log(`[Rabbitode] waiting on more messages`)
       } catch (e) {
-        console.log(`[Rabbitode] consumer channel error`, e);
+        console.error(`[Rabbitode] consumer channel error`, e);
       }
     } catch (e) {
-      console.log(`[Rabbitode] consumer connection error`, e);
+      console.error(`[Rabbitode] consumer connection error`, e);
     }
   }
 
@@ -256,7 +251,7 @@ export class RabbitMqInterface {
    *  This will handleRabbitClose
    * */
   handleRabbitClose() {
-    console.log(`[Rabbitode] Restarting`);
+    console.warn(`[Rabbitode] Restarting`);
     return setTimeout(async () => this.startRabbit(), 1000);
   }
 
@@ -286,7 +281,7 @@ export class RabbitMqInterface {
    * */
   closeOnError(err) {
     if (!err) return err;
-    console.log(`[FATAL RABBITODE ERROR CLOSING]`, err);
+    console.error(`[FATAL RABBITODE ERROR CLOSING]`, err);
     this.connection.close();
     return true;
   }
