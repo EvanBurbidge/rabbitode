@@ -178,6 +178,19 @@ myTopics,
 myConnection.setUri('http://mylocation');
 
 ```
+#### Enable debugging
+```typescript
+
+myConnection.enableDebugging();
+
+```
+
+#### Disable debugging
+```typescript
+
+myConnection.disableDebugging();
+
+```
 
 
 ## Copyright
