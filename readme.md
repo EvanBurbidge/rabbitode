@@ -1,34 +1,82 @@
-# Rabbitmq Node JS Interface
-When working on a project I found that I had need of using Rabbit MQ between a number of difference microservices.
-In order to get this functionality I introduced RabbitMQ to my project. What started out as a small function became this class and now it's free
-for anyone who wishes to use it. 
+# Rabbitode
+Rabbitode is a probject created to provide a simple interface in order to work with the AMQP interface to rabbitmq.
+RabbitMQ  is an events broker that allows us to send a recieve events between producers and consumers via an event queue.
 
 # Installation
 - Installation via npm `npm install rabbitode`
-- Feel free to fork this project and use it.
+## Requirements
+In order for this project to run you must have a working instance of rabbitmq on your machine. 
+I reccomend docker.
+```docker run -p 5672:5672 -d --rm --name rabbit rabbitmq:3```
 
 # Api
 ## Creating a connection
 
 ```typescript 
     import { RabbitMqInterface } from 'rabbitode';
-    const myConnection = new RabbitMqInterface(
-            `myQueue`, 
-            `amqp://localhost` 
-    );
+    const myConnection = new RabbitMqInterface();
+    // if you want to set a uri different to the main uri
+    myConnection.setUri('http://myconnection')
     
-    myConnection.startConsumer(
-        queueProcessingFunction,
-        10,
-        { exclusive: true },
-        { noAck: false },
-    );
+    // this will send a direct message to our queue
+     myConnection.send({
+        exchangeName: 'direct_test_exchange',
+        routingKey: `direct_test_queue`, // for fanouts leave this blank
+        content: {
+          message: `this is a direct test message`
+        }
+      }, 'direct');
+       // this will keep a live connection that will wait for messages
+      myConnection.startDirectConsumer({
+          exchangeName: 'direct_test_exchange',
+          exchangeType: 'direct',
+          queueName: 'direct_test_queue', // for fanouts leave this blank
+          consumerCallback: handleConsume,
+      });
+      // your consumer function MUST return a closure in order to provide access to the channel
+      // which will allow us to ack or nack the message
+      function handleConsume (channel) {
+          return function (msg) {
+              console.log('************************************************************');
+              console.log(msg.content.toString());
+              channel.ack(msg);
+              console.log('************************************************************');
+          }
+      }
 ``` 
 
 ## Sending a message
-
+#### Direct
 ```typescript
-    myConnection.publish({ myTest: 'testing data' });
+// direct message
+myConnection.send({
+    exchangeName: 'direct_test_exchange',
+    routingKey: `direct_test_queue`, // for fanouts leave this blank
+    content: {
+      message: `this is a direct test message`
+    }
+}, 'direct');
+```
+#### Fanout
+```typescript
+// direct message
+myConnection.send({
+    exchangeName: 'fanout_test_exchange',
+    routingKey: ``, // for fanouts leave this blank
+    content: {
+      message: `this is a fanout test message which should be received by multiple consumers`
+    }
+}, 'fanout');
+```
+#### Topic
+```typescript
+myConnection.send({
+    exchangeName: 'fanout_test_exchange',
+    routingKey: `test.*`, // for fanouts leave this blank
+    content: {
+      message: `this is a fanout test message which should be received by multiple consumers`
+    }
+}, 'topic');
 ```
 
 ## Serializing a message
