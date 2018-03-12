@@ -14,12 +14,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EvanBurbidge/rabbitmq-amqp-interface.git"
+    "url": "git+https://github.com/EvanBurbidge/rabbitode.git"
   },
   "bugs": {
-    "url": "https://github.com/EvanBurbidge/rabbitmq-amqp-interface/issues"
+    "url": "https://github.com/EvanBurbidge/rabbitode/issues"
   },
-  "homepage": "https://github.com/EvanBurbidge/rabbitmq-amqp-interface#readme",
+  "homepage": "https://github.com/EvanBurbidge/rabbitode#readme",
   "author": "EvanB54",
   "license": "ISC",
   "dependencies": {
