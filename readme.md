@@ -45,8 +45,8 @@ I reccomend docker.
       }
 ``` 
 
-## Sending a message
-#### Direct
+## API
+#### Send Direct
 ```typescript
 // direct message
 myConnection.send({
@@ -57,7 +57,7 @@ myConnection.send({
     }
 }, 'direct');
 ```
-#### Fanout
+#### Send Fanout
 ```typescript
 // direct message
 myConnection.send({
@@ -68,7 +68,7 @@ myConnection.send({
     }
 }, 'fanout');
 ```
-#### Topic
+#### Send Topic
 ```typescript
 myConnection.send({
     exchangeName: 'fanout_test_exchange',
@@ -78,8 +78,7 @@ myConnection.send({
     }
 }, 'topic');
 ```
-## Receiving a message
-#### Direct
+#### Consumer Direct
 ```typescript
 myConnection.startDirectConsumer({
     exchangeName: 'direct_test_exchange',
@@ -91,7 +90,7 @@ myConnection.startDirectConsumer({
 });
 ```
 
-#### Fanout
+#### Consumer Fanout
 ```typescript
 myConnection.startFanoutConsumer({
     exchangeName: 'fanout_test_exchange',
@@ -104,7 +103,7 @@ myConnection.startFanoutConsumer({
     },
 });
 ```
-#### topic
+#### Consumer topic
 ```typescript
 const myTopics = ['test.*', '*.test'];
 myConnection.startTopicConsumer({
@@ -117,6 +116,13 @@ myConnection.startTopicConsumer({
       channel.ack(msg);
     },
 }, myTopics);
+```
+
+#### Set custom uri
+```typescript
+
+myConnection.setUri('http://mylocation');
+
 ```
 
 
