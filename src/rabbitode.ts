@@ -86,6 +86,7 @@ export class RabbitMqInterface {
    *  This will publish our item to an exchange
    * @param {Object} messageConfig - the configuration of the message to be sent
    * @param {String} exchangeType - this is the type e.g. direct, fanout, topic
+   * @param {Object} configs - a user can configure the exchanges and stuff whichever way they want
    * */
   async publishToExchange({ exchangeName, routingKey, content },
                           exchangeType: string,
@@ -170,6 +171,9 @@ export class RabbitMqInterface {
    * @description
    *  This will allow us to consume various sorts of queues, it MUST take a
    *  consumer call back param
+   *  @param {Object} queueConfig - a user can configure their consumers
+   *  @param {Object} configs - a user can configure the q's to have certain settings there are default settings
+   *  @param {Array} topics - a list of topics for a topic exchange
    * */
   async startConsumer({ exchangeName = ``, exchangeType = `direct`, queueName = ``, consumerCallback },
                       configs: any = {
