@@ -151,10 +151,13 @@ export class RabbitMqInterface {
         console.log('[Rabbitode] asserting exchange');
         await channel.assertExchange(exchangeName, exchangeType, { durable: false });
         console.log('[Rabbitode] asserting queue');
-        const queue = await channel.assertQueue(queueName, { exclusive: false });
+        const queue = await channel.assertQueue(queueName, { exclusive: exchangeType !== 'direct' });
         if (topics.length > 0) {
           console.log('[Rabbitode] binding topics to queue');
-          await topics.map(async (topic) => await channel.bindQueue(queue.queue, exchangeName, topic));
+          topics.forEach(async (topic) => {
+            console.log(`[Rabbitode] topic:`, topic);
+            await channel.bindQueue(queue.queue, exchangeName, topic)
+          });
         } else {
           console.log('[Rabbitode] binding queue to exchange');
           await channel.bindQueue(queue.queue, exchangeName, exchangeType === 'fanout' ? '' : queue.queue);

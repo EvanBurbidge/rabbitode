@@ -10,7 +10,7 @@ setInterval(() => {
   console.log(`publishing`);
   rabbitInterface.send({
     exchangeName: 'fanout_test_exchange',
-    routingKey: `test.*`,
+    routingKey: `test.test`,
     content: `this is a test message for topics: ${count}`
   }, 'topic');
   console.log(`published`);
