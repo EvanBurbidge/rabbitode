@@ -160,7 +160,7 @@ export class RabbitMqInterface {
           });
         } else {
           console.log('[Rabbitode] binding queue to exchange');
-          await channel.bindQueue(queue.queue, exchangeName, exchangeType === 'fanout' ? '' : queue.queue);
+          await channel.bindQueue(queue.queue, exchangeName, queue.queue);
         }
         console.log(`[Rabbitode] prefetching`);
         await channel.prefetch(10);
