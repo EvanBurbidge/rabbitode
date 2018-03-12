@@ -5,8 +5,14 @@ let rabbitInterface = new RabbitMqInterface();
 const myTopics = ['test.*', '*.test'];
 rabbitInterface.startTopicConsumer({
   exchangeName: 'topic_test_exchange',
-  consumerCallback: channel => msg => {
-    console.log(myConnection.decodeToJson(msg));
-    channel.ack(msg);
-  },
+  consumerCallback: handleConsume,
 }, myTopics);
+
+function handleConsume (channel) {
+  return function (msg) {
+    console.log('*************************  WORKER 1  ***********************************');
+    console.log(msg.content.toString());
+    channel.ack(msg)
+    console.log('************************************************************');
+  }
+}

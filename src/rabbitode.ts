@@ -154,7 +154,7 @@ export class RabbitMqInterface {
         const queue = await channel.assertQueue(queueName, { exclusive: false });
         if (topics.length > 0) {
           console.log('[Rabbitode] binding topics to queue');
-          topics.map(async (topic) => await channel.bindQueue(queue.queue, exchangeName, topic));
+          await topics.map(async (topic) => await channel.bindQueue(queue.queue, exchangeName, topic));
         } else {
           console.log('[Rabbitode] binding queue to exchange');
           await channel.bindQueue(queue.queue, exchangeName, exchangeType === 'fanout' ? '' : queue.queue);
