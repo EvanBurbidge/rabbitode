@@ -16,7 +16,7 @@ I reccomend docker.
     import { RabbitMqInterface } from 'rabbitode';
     const myConnection = new RabbitMqInterface();
     // if you want to set a uri different to the main uri
-    myConnection.setUri('http://myconnection')
+    myConnection.setRabbitUri('http://myconnection')
     
     // this will send a direct message to our queue
      myConnection.send({
@@ -175,7 +175,7 @@ myTopics,
 #### Set custom uri
 ```typescript
 
-myConnection.setUri('http://mylocation');
+myConnection.setRabbitUri('http://mylocation');
 
 ```
 #### Enable debugging
