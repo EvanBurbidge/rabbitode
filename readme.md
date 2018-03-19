@@ -1,8 +1,6 @@
-# Rabbitode
+![Screenshot](rabbitode-logo.png)
 Rabbitode is a probject created to provide a simple interface in order to work with the AMQP interface to rabbitmq.
 RabbitMQ  is an events broker that allows us to send a recieve events between producers and consumers via an event queue.
-
-![Screenshot](rabbitode-logo.png)
 
 # Installation
 - Installation via npm `npm install rabbitode`
