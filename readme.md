@@ -3,6 +3,8 @@ When working on a project I found that I had need of using Rabbit MQ between a n
 In order to get this functionality I introduced RabbitMQ to my project. What started out as a small function became this class and now it's free
 for anyone who wishes to use it. 
 
+![Screenshot](rabbitode-logo.png)
+
 # Installation
 - Installation via npm `npm install rabbitode`
 - Feel free to fork this project and use it.
