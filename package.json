@@ -3,6 +3,7 @@
   "version": "1.1.5",
   "description": "A client wrapper to allow the usage of rabbitmq, amqplib with nodejs",
   "main": "dist/rabbitode.min.js",
+  "typings": "dist/rabbitode.d.ts",
   "keywords": [
     "rabbitmq",
     "amqplib",
