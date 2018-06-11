@@ -336,8 +336,8 @@ export class RabbitMqInterface {
    * @description
    *  This will decode our buffer into an object, array, whatever it is.
    * */
-  decodeToJson(message): void {
-    JSON.parse(message.content.toString());
+  decodeToJson(message): any {
+    return JSON.parse(message.content.toString());
   }
 
   /**
