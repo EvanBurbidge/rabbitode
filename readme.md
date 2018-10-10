@@ -148,6 +148,9 @@ myConnection.decodeToString(message);
 
 ```
 
+# Breaking Changes
+### v-2.0.0
+ - send method no longer available, use sendDirect, sendTopic, sendFanout instead
 
 ## Copyright
 Copyright 2018 Evan Burbidge
