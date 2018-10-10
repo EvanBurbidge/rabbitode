@@ -54,7 +54,6 @@ rabbitInterface.sendDirect({
 ```
 #### Send Fanout
 ```typescript
-// direct message
 rabbitInterface.sendFanout({
     exchangeName: 'fanout_test_exchange',
     routingKey: ``, // leave this blank with a fanour
@@ -84,7 +83,6 @@ rabbitInterface
 #### Consumer Fanout
 ```typescript
 rabbitInterface
-  .enableDebugging()
   .startFanoutConsumer({
     exchangeName: 'fanout_test_exchange',
     exchangeType: 'fanout',
@@ -95,6 +93,7 @@ rabbitInterface
 ```
 #### Consumer topic
 ```typescript
+// the topics this consumer will listen for given in the routing key
 const myTopics = ['test.*', '*.test'];
 rabbitInterface
     .enableDebugging()
