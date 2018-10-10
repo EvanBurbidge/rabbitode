@@ -147,8 +147,9 @@ myConnection.decodeToString(message);
 
 ```
 
-# Breaking Changes
+# Changes
 ### v-2.0.0
+ - Most methods return this to enable method chaining 
  - send method no longer available, use sendDirect, sendTopic, sendFanout instead
 
 ## Copyright

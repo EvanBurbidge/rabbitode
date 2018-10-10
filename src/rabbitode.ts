@@ -28,7 +28,6 @@ export interface ConsumerConfig {
  * */
 export class RabbitMqInterface {
 
-  public connection: any;
   public debug: boolean = false;
   public connectionUri: string = 'amqp://localhost';
 
@@ -42,8 +41,9 @@ export class RabbitMqInterface {
    * @description
    *  description here
    * */
-  setRabbitUri(uri: string): string {
-    return this.connectionUri = uri;
+  setRabbitUri(uri: string): this {
+    this.connectionUri = uri;
+    return this;
   }
 
   /**
@@ -215,10 +215,7 @@ export class RabbitMqInterface {
    * @param {Object} consumerConfig - this is the config for our exchange name and other fields
    * */
   startDirectConsumer(consumerConfig: ConsumerConfig, configs?:any): this {
-    this.startConsumer({
-      ...consumerConfig,
-      exchangeType: 'direct',
-    },                 configs);
+    this.startConsumer({ ...consumerConfig, exchangeType: 'direct' }, configs);
     return this;
   }
 
@@ -230,10 +227,7 @@ export class RabbitMqInterface {
    * @param {Object} consumerConfig - this is the config for our exchange name and other fields
    * */
   startFanoutConsumer(consumerConfig: ConsumerConfig, configs?:any): this {
-    this.startConsumer({
-      ...consumerConfig,
-      exchangeType: 'fanout',
-    },                 configs);
+    this.startConsumer({ ...consumerConfig, exchangeType: 'fanout' }, configs);
     return this;
   }
 
@@ -246,10 +240,7 @@ export class RabbitMqInterface {
    * @param {Array} topics - this is a list of topics we want the queue to listen for
    * */
   startTopicConsumer(consumerConfig: ConsumerConfig, topics: string[], configs?:any): this {
-    this.startConsumer({
-      ...consumerConfig,
-      exchangeType: 'topic',
-    },                 configs, topics);
+    this.startConsumer({ ...consumerConfig, exchangeType: 'topic' }, configs, topics);
     return this;
   }
 
