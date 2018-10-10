@@ -122,16 +122,16 @@ export class RabbitMqInterface {
     }
   }
 
-  sendDirect(messageConfig: MqExchangeMessage): this {
-    this.publishToExchange(messageConfig, 'direct');
+  sendDirect(messageConfig: MqExchangeMessage, configs?: any): this {
+    this.publishToExchange(messageConfig, 'direct', configs);
     return this;
   }
-  sendFanout(messageConfig: MqExchangeMessage): this {
-    this.publishToExchange(messageConfig, 'fanout');
+  sendFanout(messageConfig: MqExchangeMessage,  configs?: any): this {
+    this.publishToExchange(messageConfig, 'fanout', configs);
     return this;
   }
-  sendTopic(messageConfig: MqExchangeMessage): this {
-    this.publishToExchange(messageConfig, 'topic');
+  sendTopic(messageConfig: MqExchangeMessage,  configs?: any): this {
+    this.publishToExchange(messageConfig, 'topic', configs);
     return this;
   }
 
@@ -268,7 +268,7 @@ export class RabbitMqInterface {
     ) {
       updatableContent = JSON.stringify(content);
     }
-    return new Buffer(updatableContent);
+    return Buffer.from(updatableContent);
   }
 
   /**

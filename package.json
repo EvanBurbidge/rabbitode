@@ -25,7 +25,8 @@
   "license": "ISC",
   "dependencies": {
     "amqplib": "^0.5.2",
-    "await-to-js": "^2.0.1"
+    "await-to-js": "^2.0.1",
+    "buffer-from": "^1.1.1"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.8",

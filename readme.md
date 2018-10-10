@@ -7,27 +7,31 @@ RabbitMQ  is an events broker that allows us to send a recieve events between pr
 # Installation
 - Installation via npm `npm install rabbitode`
 ## Requirements
-In order for this project to run you must have a working instance of rabbitmq on your machine. 
+In order for this project to run you must have a working instance of rabbitmq on your machine.
 I reccomend docker.
 ```docker run -p 5672:5672 -d --rm --name rabbit rabbitmq:3```
 
 # Api
 ## Creating a connection
-
-```typescript 
+```typescript
     import { RabbitMqInterface } from 'rabbitode';
     const myConnection = new RabbitMqInterface();
     // if you want to set a uri different to the main uri
     myConnection.setRabbitUri('http://myconnection')
-    
+    // your consumer function MUST return a closure in order to provide access to the channel
+    // which will allow us to ack or nack the message
+    const handleConsume = channel => msg => {
+      console.log(myConnection.decodeToString(msg))
+      channel.ack(msg);
+    };
     // this will send a direct message to our queue
-     myConnection.send({
+     myConnection.sendDirect({
         exchangeName: 'direct_test_exchange',
         routingKey: `direct_test_queue`, // for fanouts leave this blank
         content: {
           message: `this is a direct test message`
         }
-      }, 'direct');
+      }); // you could also abstract this out to a method
        // this will keep a live connection that will wait for messages
       myConnection.startDirectConsumer({
           exchangeName: 'direct_test_exchange',
@@ -35,37 +39,19 @@ I reccomend docker.
           queueName: 'direct_test_queue', // for fanouts leave this blank
           consumerCallback: handleConsume,
       });
-      // your consumer function MUST return a closure in order to provide access to the channel
-      // which will allow us to ack or nack the message
-      function handleConsume (channel) {
-          return function (msg) {
-              console.log('************************************************************');
-              console.log(msg.content.toString());
-              channel.ack(msg);
-              console.log('************************************************************');
-          }
-      }
-``` 
+```
 
 ## API
 #### Send Direct
 ```typescript
 // direct message
-myConnection.send({
+myConnection.sendDirect({
     exchangeName: 'direct_test_exchange',
     routingKey: `direct_test_queue`, // for fanouts leave this blank
     content: {
       message: `this is a direct test message`
     }
-}, 'direct',
- {
-    exchange: {
-        durable: false
-    },
-    channel: {
-        persistent: true
-    }
-});
+  });
 ```
 #### Send Fanout
 ```typescript
@@ -131,7 +117,7 @@ myConnection.startFanoutConsumer({
     queueName: '',
     consumerCallback: channel => msg => {
       // set multiple woekers to test
-      console.log('******************** WORKER {ID} ************************') 
+      console.log('******************** WORKER {ID} ************************')
       console.log(myConnection.decodeToJson(msg));
       channel.ack(msg);
     },
@@ -155,7 +141,7 @@ myConnection.startTopicConsumer({
     queueName: '',
     consumerCallback: channel => msg => {
       // set multiple woekers to test
-      console.log('******************** WORKER {ID} ************************') 
+      console.log('******************** WORKER {ID} ************************')
       console.log(myConnection.decodeToJson(msg));
       channel.ack(msg);
     },

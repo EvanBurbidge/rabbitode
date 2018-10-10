@@ -15,5 +15,5 @@ setInterval(() => {
     }
   });
   console.log(`published`);
-},  10000);
+},  1000);
 
