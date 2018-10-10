@@ -8,10 +8,12 @@ let count = 0;
 setInterval(() => {
   count++;
   console.log(`publishing`);
-  rabbitInterface.send({
+  rabbitInterface.sendTopic({
     exchangeName: 'topic_test_exchange',
     routingKey: `test.test`,
-    content: `this is a test message for topics: ${count}`
-  }, 'topic');
+    content: {
+      message: `this is a test message for topics: ${count}`,
+    },
+  });
   console.log(`published`);
 },  10000);

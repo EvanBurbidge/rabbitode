@@ -7,13 +7,13 @@ let count = 0;
 setInterval(() => {
   count++;
   console.log(`publishing`);
-  rabbitInterface.send({
+  rabbitInterface.sendDirect({
     exchangeName: 'direct_test_exchange',
     routingKey: `direct_test_queue`,
     content: {
       message: `this is a test message for direct stuff ${count}`
     }
-  }, 'direct');
+  });
   console.log(`published`);
-},  10000);
+},  1000);
 

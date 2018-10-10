@@ -25,19 +25,20 @@
   "license": "ISC",
   "dependencies": {
     "amqplib": "^0.5.2",
-    "await-to-js": "^2.0.1"
+    "await-to-js": "^2.0.1",
+    "buffer-from": "^1.1.1"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.5.6",
-    "@types/express": "^4.11.1",
-    "@types/node": "^9.6.21",
+    "@types/amqplib": "^0.5.8",
+    "@types/express": "^4.16.0",
+    "@types/node": "^9.6.31",
     "gulp": "^3.9.1",
     "gulp-minify": "^2.1.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^3.0.0",
+    "gulp-rename": "^1.4.0",
+    "gulp-uglify": "^3.0.1",
     "pump": "^3.0.0",
-    "tslint": "^5.9.1",
-    "tslint-config-airbnb": "^5.7.0",
-    "typescript": "^2.7.2"
+    "tslint": "^5.11.0",
+    "tslint-config-airbnb": "^5.11.0",
+    "typescript": "^2.9.2"
   }
 }

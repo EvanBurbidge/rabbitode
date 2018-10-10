@@ -2,6 +2,13 @@ let {RabbitMqInterface} = require('../../dist/rabbitode.min');
 
 
 const rabbitInterface = new RabbitMqInterface();
+
+const handleConsume = channel => msg => {
+  console.log(rabbitInterface.decodeToString(msg));
+  console.log(rabbitInterface.decodeToJson(msg));
+  channel.ack(msg);
+};
+
 rabbitInterface
   .enableDebugging()
   .startDirectConsumer({
@@ -10,12 +17,3 @@ rabbitInterface
     queueName: 'direct_test_queue',
     consumerCallback: handleConsume,
 });
-
-function handleConsume (channel) {
-    return function (msg) {
-        console.log('************************************************************');
-        console.log(msg.content.toString());
-        channel.ack(msg);
-        console.log('************************************************************');
-    }
-}
