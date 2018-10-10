@@ -1,20 +1,17 @@
-let {RabbitMqInterface} = require('../../dist/rabbitode.min');
+let { RabbitMqInterface } = require('../../dist/rabbitode.min');
 
-
+const handleConsume = channel => msg => {
+  console.log(rabbitInterface.decodeToString(msg));
+  console.log(rabbitInterface.decodeToJson(msg));
+  channel.ack(msg);
+};
 const rabbitInterface = new RabbitMqInterface();
 
-rabbitInterface.startFanoutConsumer({
+rabbitInterface
+  .enableDebugging()
+  .startFanoutConsumer({
     exchangeName: 'fanout_test_exchange',
     exchangeType: 'fanout',
     queueName: '',
     consumerCallback: handleConsume,
-});
-
-function handleConsume (channel) {
-    return function (msg) {
-        console.log('*************************  WORKER 1  ***********************************');
-        console.log(msg.content.toString());
-        channel.ack(msg)
-        console.log('************************************************************');
-    }
-}
+  });

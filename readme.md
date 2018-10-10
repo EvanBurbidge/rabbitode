@@ -7,8 +7,8 @@ RabbitMQ  is an events broker that allows us to send a recieve events between pr
 # Installation
 - Installation via npm `npm install rabbitode`
 ## Requirements
-In order for this project to run you must have a working instance of rabbitmq on your machine.
-I reccomend docker.
+In order for this project to run you must have a working instance of rabbitmq on your machine or server.
+I reccomend docker for local development.
 ```docker run -p 5672:5672 -d --rm --name rabbit rabbitmq:3```
 
 # Api
@@ -16,27 +16,26 @@ I reccomend docker.
 ```typescript
     import { RabbitMqInterface } from 'rabbitode';
     const myConnection = new RabbitMqInterface();
-    // if you want to set a uri different to the main uri
+    
     myConnection.setRabbitUri('http://myconnection')
-    // your consumer function MUST return a closure in order to provide access to the channel
-    // which will allow us to ack or nack the message
+    
     const handleConsume = channel => msg => {
       console.log(myConnection.decodeToString(msg))
       channel.ack(msg);
     };
-    // this will send a direct message to our queue
+    
      myConnection.sendDirect({
         exchangeName: 'direct_test_exchange',
-        routingKey: `direct_test_queue`, // for fanouts leave this blank
+        routingKey: `direct_test_queue`,
         content: {
           message: `this is a direct test message`
         }
-      }); // you could also abstract this out to a method
-       // this will keep a live connection that will wait for messages
+      });
+       
       myConnection.startDirectConsumer({
           exchangeName: 'direct_test_exchange',
           exchangeType: 'direct',
-          queueName: 'direct_test_queue', // for fanouts leave this blank
+          queueName: 'direct_test_queue',
           consumerCallback: handleConsume,
       });
 ```
@@ -44,122 +43,78 @@ I reccomend docker.
 ## API
 #### Send Direct
 ```typescript
-// direct message
-myConnection.sendDirect({
+rabbitInterface.sendDirect({
     exchangeName: 'direct_test_exchange',
-    routingKey: `direct_test_queue`, // for fanouts leave this blank
+    routingKey: `direct_test_queue`,
     content: {
-      message: `this is a direct test message`
+      message: `this is a test message for direct stuff ${variable}`
     }
   });
+
 ```
 #### Send Fanout
 ```typescript
 // direct message
-myConnection.send({
+rabbitInterface.sendFanout({
     exchangeName: 'fanout_test_exchange',
-    routingKey: ``, // for fanouts leave this blank
-    content: {
-      message: `this is a fanout test message which should be received by multiple consumers`
-    }
-}, 'fanout', {
- exchange: {
-     durable: false
- },
- channel: {
-     persistent: true
- }
+    routingKey: ``, // leave this blank with a fanour
+    content: `this is a test message for fanouts: ${count}` 
+    // will return undefined with decodeToJSON as its a string
 });
 ```
 #### Send Topic
 ```typescript
-myConnection.send({
-    exchangeName: 'fanout_test_exchange',
-    routingKey: `test.*`, // for fanouts leave this blank
-    content: {
-      message: `this is a fanout test message which should be received by multiple consumers`
-    }
-}, 'topic', {
- exchange: {
-     durable: false
- },
- channel: {
-     persistent: true
- }
-});
+rabbitInterface.sendTopic({
+    exchangeName: 'topic_test_exchange',
+    routingKey: `test.test`,
+    content: `this is a test message for topics: ${count}`
+  });
 ```
 #### Consumer Direct
 ```typescript
-myConnection.startDirectConsumer({
+rabbitInterface
+  .startDirectConsumer({
     exchangeName: 'direct_test_exchange',
+    exchangeType: 'direct',
     queueName: 'direct_test_queue',
-    consumerCallback: channel => msg => {
-      console.log(myConnection.decodeToJson(msg));
-      channel.ack(msg);
-    },
-}, {
-    exchange: {
-        durable: false
-    },
-    queue: {
-        exclusive: false
-    },
-    consumer: {
-        noAck: false
-    }
+    consumerCallback: handleConsume,
 });
 ```
 
 #### Consumer Fanout
 ```typescript
-myConnection.startFanoutConsumer({
+rabbitInterface
+  .enableDebugging()
+  .startFanoutConsumer({
     exchangeName: 'fanout_test_exchange',
+    exchangeType: 'fanout',
     queueName: '',
-    consumerCallback: channel => msg => {
-      // set multiple woekers to test
-      console.log('******************** WORKER {ID} ************************')
-      console.log(myConnection.decodeToJson(msg));
-      channel.ack(msg);
-    },
-}, {
-     exchange: {
-         durable: false
-     },
-     queue: {
-         exclusive: false
-     },
-     consumer: {
-         noAck: false
-     }
- });
+    consumerCallback: handleConsume,
+  });
+
 ```
 #### Consumer topic
 ```typescript
 const myTopics = ['test.*', '*.test'];
-myConnection.startTopicConsumer({
-    exchangeName: 'topic_test_exchange',
-    queueName: '',
-    consumerCallback: channel => msg => {
-      // set multiple woekers to test
-      console.log('******************** WORKER {ID} ************************')
-      console.log(myConnection.decodeToJson(msg));
-      channel.ack(msg);
-    },
-},
-myTopics,
-{
-   exchange: {
-       durable: false
-   },
-   queue: {
-       exclusive: false
-   },
-   consumer: {
-       noAck: false
-   }
-});
+rabbitInterface
+    .enableDebugging()
+    .startTopicConsumer({
+        exchangeName: 'topic_test_exchange',
+        exchangeType: 'topic',
+        consumerCallback: handleConsume,
+    }, myTopics);
 ```
+#### Consumer Handler
+```typescript
+//MUST CONTAIN CALLBACKS
+const handleConsume = channel => msg => {
+  console.log(rabbitInterface.decodeToString(msg));
+  console.log(rabbitInterface.decodeToJson(msg));
+  //console.log(msg.fields.routingKey); topics only really
+  channel.ack(msg);
+};
 
+```
 #### Set custom uri
 ```typescript
 
@@ -177,6 +132,20 @@ myConnection.enableDebugging();
 ```typescript
 
 myConnection.disableDebugging();
+
+```
+
+#### Decode to JSON
+##### will check if message content is JSON or Return undefined
+```typescript
+
+myConnection.decodeToJson(message);
+
+```
+#### Decode to String
+```typescript
+
+myConnection.decodeToString(message);
 
 ```
 

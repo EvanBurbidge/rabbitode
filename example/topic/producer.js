@@ -11,7 +11,9 @@ setInterval(() => {
   rabbitInterface.sendTopic({
     exchangeName: 'topic_test_exchange',
     routingKey: `test.test`,
-    content: `this is a test message for topics: ${count}`
+    content: {
+      message: `this is a test message for topics: ${count}`,
+    },
   });
   console.log(`published`);
 },  10000);

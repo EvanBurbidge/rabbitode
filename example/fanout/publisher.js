@@ -10,8 +10,8 @@ setInterval(() => {
     console.log(`publishing`);
     rabbitInterface.sendFanout({
         exchangeName: 'fanout_test_exchange',
-        routingKey: ``,
+        routingKey: ``, // leave this blank with a fanour
         content: `this is a test message for fanouts: ${count}`
     });
     console.log(`published`);
-},  10000);
+},  1000);

@@ -1,6 +1,10 @@
 let {RabbitMqInterface} = require('../../dist/rabbitode.min');
 
-
+const handleConsume = channel => msg => {
+  console.log(rabbitInterface.decodeToString(msg));
+  console.log(rabbitInterface.decodeToJson(msg));
+  channel.ack(msg);
+};
 const rabbitInterface = new RabbitMqInterface();
 
 rabbitInterface.startFanoutConsumer({
@@ -10,11 +14,3 @@ rabbitInterface.startFanoutConsumer({
     consumerCallback: handleConsume,
 });
 
-function handleConsume (channel) {
-    return function (msg) {
-        console.log('*************************  WORKER 2  ***********************************');
-        console.log(msg.content.toString());
-        channel.ack(msg)
-        console.log('************************************************************');
-    }
-}

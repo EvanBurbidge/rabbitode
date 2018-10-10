@@ -5,6 +5,7 @@ const rabbitInterface = new RabbitMqInterface();
 
 const handleConsume = channel => msg => {
   console.log(rabbitInterface.decodeToString(msg));
+  console.log(rabbitInterface.decodeToJson(msg));
   channel.ack(msg);
 };
 

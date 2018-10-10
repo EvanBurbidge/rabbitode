@@ -296,6 +296,21 @@ export class RabbitMqInterface {
 
   /**
    * @method
+   * @name isJsonString
+   * @description
+   *  This will check to see if a value contains a valid json string
+   * */
+  isJsonString (str: any): boolean {
+    try {
+      JSON.parse(str);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * @method
    * @description
    *  This will decode our buffer into an object, array, whatever it is.
    * */
@@ -309,7 +324,10 @@ export class RabbitMqInterface {
    *  This will decode our buffer into an object, array, whatever it is.
    * */
   decodeToJson(message): any {
-    return JSON.parse(message.content.toString());
+    if (this.isJsonString(message.content.toString())) {
+      return JSON.parse(message.content.toString());
+    }
+    this.logger('[Rabbitode] message is not valid json', 'error');
   }
 
   /**
