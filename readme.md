@@ -96,7 +96,6 @@ rabbitInterface
 // the topics this consumer will listen for given in the routing key
 const myTopics = ['test.*', '*.test'];
 rabbitInterface
-    .enableDebugging()
     .startTopicConsumer({
         exchangeName: 'topic_test_exchange',
         exchangeType: 'topic',
