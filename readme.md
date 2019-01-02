@@ -151,6 +151,9 @@ myConnection.decodeToString(message);
 ### v-2.0.0
  - Most methods return this to enable method chaining 
  - send method no longer available, use sendDirect, sendTopic, sendFanout instead
+ 
+### v-2.0.1
+  - Security Vulnerability fixes in package.json
 
 ## Copyright
 Copyright 2018 Evan Burbidge
