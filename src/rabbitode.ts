@@ -30,6 +30,7 @@ export class RabbitMqInterface {
 
   public debug: boolean = false;
   public connectionUri: string = 'amqp://localhost';
+  private offlineQueue: any[] = [];
 
   constructor() {
     this.logger('[Rabbitode] is ready to use');
@@ -98,27 +99,16 @@ export class RabbitMqInterface {
       this.logger('[Rabbitode] creating channel');
       try {
         const channel = await conn.createConfirmChannel();
-        this.logger(`[Rabbitode] asserting exchange: ${exchangeName},
-        exchangeType: ${exchangeType}`);
         await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
-        this.logger('[Rabbitode] publishing message');
-        await channel.publish(exchangeName, routingKey, this.bufferIfy(content),
-                              { ...configs.channel },
-                              err => err ?
-            this.logger(`[Rabbitode] there was a problem ${err}`, 'error') :
-            this.logger('[Rabbitode] message sent'));
-
-        setTimeout(async() => {
-          this.logger('[Rabbitode] closing channel');
-          await channel.close();
-          this.logger('[Rabbitode] closing connection');
-          await conn.close();
-        },         2500);
+        this.sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType);
+        this.afterPublish(channel, conn);
       } catch (e) {
         this.logger(`[Rabbitode] channel error ${e}`, 'error');
+        this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
       }
     } catch (e) {
       this.logger(`[Rabbitode] channel error ${e}`, 'error');
+      this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
     }
   }
 
@@ -133,6 +123,46 @@ export class RabbitMqInterface {
   sendTopic(messageConfig: MqExchangeMessage,  configs?: any): this {
     this.publishToExchange(messageConfig, 'topic', configs);
     return this;
+  }
+  async sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType) {
+    this.logger('[Rabbitode] publishing message');
+    const formattedContent = this.bufferIfy(content);
+    await channel
+      .publish(
+        exchangeName,
+        routingKey,
+        formattedContent,
+        { ...configs.channel },
+        this.publisherCallback(exchangeName, routingKey, formattedContent, exchangeType),
+      );
+  }
+  publisherCallback(exchangeName, routingKey, formattedContent, exchangeType) {
+    return  (err) => {
+      if (err) {
+        this.handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType);
+      }
+      this.logger('[Rabbitode] message sent');
+    };
+  }
+
+  afterPublish(channel, conn) {
+    setTimeout(async() => {
+      this.logger('[Rabbitode] closing channel');
+      await channel.close();
+      this.logger('[Rabbitode] closing connection');
+      await conn.close();
+    },         2500);
+  }
+  handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType) {
+    this.logger(`[Rabbitode] there was a problem ${err}`, 'error');
+    this.offlineQueue.push({
+      exchangeType,
+      message: {
+        exchangeName, routingKey, formattedContent,
+      },
+      isPublished: false,
+    });
+    console.log(this.offlineQueue);
   }
 
   /**
