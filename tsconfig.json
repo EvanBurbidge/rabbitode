@@ -5,6 +5,7 @@
     "outDir": "dist",
     "sourceMap": true,
     "declaration": true,
+    "importHelpers": true,
     "typeRoots": [
       "./node_modules/@types"
     ],

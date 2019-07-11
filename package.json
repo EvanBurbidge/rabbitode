@@ -10,7 +10,10 @@
     "amqp"
   ],
   "scripts": {
-    "build": "tsc && gulp",
+    "build": "npm run clean && tsc && npm run uglify",
+    "clean": "rm -rf ./dist",
+    "uglify": "uglifyjs ./dist/rabbitode.js -o ./dist/rabbitode.min.js  -c toplevel,sequences=false -m",
+    "minify": "jsmin -o ./dist/rabbitode.min.js ./dist/rabbitode.js",
     "watch": "tsc -w"
   },
   "repository": {
@@ -26,19 +29,24 @@
   "dependencies": {
     "amqplib": "^0.5.3",
     "await-to-js": "^2.1.1",
-    "buffer-from": "^1.1.1"
+    "buffer-from": "^1.1.1",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.9",
     "@types/express": "^4.16.0",
     "@types/node": "^9.6.41",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-minify": "^2.1.0",
     "gulp-rename": "^1.4.0",
     "gulp-uglify": "^3.0.1",
+    "jsmin": "^1.0.1",
     "pump": "^3.0.0",
     "tslint": "^5.12.0",
     "tslint-config-airbnb": "^5.11.1",
-    "typescript": "^2.9.2"
+    "typescript": "^2.9.2",
+    "uglify-js": "^3.6.0",
+    "webpack": "^4.35.3",
+    "webpack-cli": "^3.3.5"
   }
 }
