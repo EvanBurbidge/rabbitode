@@ -154,6 +154,10 @@ myConnection.decodeToString(message);
  
 ### v-2.0.1
   - Security Vulnerability fixes in package.json
+  
+### v-2.1.0
+  - Security Vulnerability fixes in package.json
+  - Update build process for smaller files
 
 ## Copyright
 Copyright 2018 Evan Burbidge
