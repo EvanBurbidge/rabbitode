@@ -12,8 +12,10 @@ const handleConsume = channel => msg => {
 rabbitInterface
   .enableDebugging()
   .startDirectConsumer({
-    exchangeName: 'direct_test_exchange',
-    exchangeType: 'direct',
-    queueName: 'direct_test_queue',
-    consumerCallback: handleConsume,
-});
+    consumerConfig: {
+      exchangeName: 'direct_test_exchange',
+      exchangeType: 'direct',
+      queueName: 'direct_test_queue',
+      consumerCallback: handleConsume,
+    },
+  });

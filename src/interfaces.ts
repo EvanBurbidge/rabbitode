@@ -16,3 +16,10 @@ export interface ConsumerConfig {
   queueName: string;
   consumerCallback: (x: any) => (y: any) => void;
 }
+
+export interface startConsumerProps {
+  consumerConfig: ConsumerConfig;
+  configs: any;
+  connectionOptions: any;
+  topics?: string[];
+}

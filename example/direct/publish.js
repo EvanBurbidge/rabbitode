@@ -14,6 +14,5 @@ setInterval(() => {
       message: `this is a test message for direct stuff ${count}`
     }
   });
-  console.log(`published`);
 },  1000);
 

@@ -3,7 +3,6 @@ export async function asyncForEach(array, callback) {
     await callback(array[index], index, array);
   }
 }
-
 /**
 * @method
 * @description
@@ -28,3 +27,12 @@ export function rabbitLogger(message: string, level: string = 'log'): void {
    }
  }
 }
+
+export const getDefaultQueueConfig = () => ({
+  exchange: {
+    durable: false,
+  },
+  queue: {
+    exclusive: false,
+  },
+})
