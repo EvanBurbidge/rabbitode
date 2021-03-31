@@ -1,4 +1,4 @@
-async function asyncForEach(array, callback) {
+export async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
@@ -6,12 +6,11 @@ async function asyncForEach(array, callback) {
 
 /**
 * @method
-* @name RabbitLogger
 * @description
 *  This will either log or not log messages depending
 *  on a debug flag set by users
 * */
-function RabbitLogger(message: string, level: string = 'log'): void {
+export function rabbitLogger(message: string, level: string = 'log'): void {
  if (this.debug) {
    switch (level) {
      case 'warning':
@@ -29,9 +28,3 @@ function RabbitLogger(message: string, level: string = 'log'): void {
    }
  }
 }
-
-
-module.exports = {
-  asyncForEach,
-  logger,
-};

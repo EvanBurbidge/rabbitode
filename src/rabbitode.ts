@@ -1,18 +1,17 @@
-const amqp = require('amqplib');
-const { afterPublish } = require('./publishing');
-const { asyncForEach, RabbitLogger } = require('./utils');
-
+import * as amqp from 'amqplib';
+import { getNewChannel } from './channels';
+import { asyncForEach, rabbitLogger } from './utils';
+import { afterPublish, publisherCallback, handlePublishError } from './publishing';
+import { bufferIfy, isJsonString, decodeToString, decodeToJson } from './encodings';
 export interface MqExchangeMessage {
   exchangeName: string;
   routingKey: string;
   content: Buffer | string;
 }
-
 export interface MqTaskMessage {
   queueName: string;
   content: Buffer | string;
 }
-
 export interface ConsumerConfig {
   exchangeName: string;
   exchangeType: string;
@@ -32,10 +31,9 @@ export class RabbitMqInterface {
 
   public debug: boolean = false;
   public connectionUri: string = 'amqp://localhost';
-  private offlineQueue: any[] = [];
 
   constructor() {
-    RabbitLogger('is ready to use');
+    rabbitLogger('is ready to use');
   }
 
   /**
@@ -74,8 +72,8 @@ export class RabbitMqInterface {
    * this method is called once upon start up
    * and the recursively anytime we have an error
    * */
-  startRabbit(): Promise<any> {
-    return amqp.connect(this.connectionUri);
+  startRabbit(connectionOptions = {}): Promise<any> {
+    return amqp.connect(this.connectionUri, connectionOptions);
   }
   /**
    * @method
@@ -85,6 +83,7 @@ export class RabbitMqInterface {
    * @param {Object} messageConfig - the configuration of the message to be sent
    * @param {String} exchangeType - this is the type e.g. direct, fanout, topic
    * @param {Object} configs - a user can configure the exchanges and stuff whichever way they want
+   * @param {Object} connectionOptions - connection options for connecting to rabbitmq
    * */
   async publishToExchange(
     {
@@ -96,23 +95,25 @@ export class RabbitMqInterface {
     configs: any = {
       exchange: { durable: false },
       channel: { persistent: true },
-    }
+    },
+    connectionOptions = {}
   ): Promise<any> {
     try {
-      const conn = await this.startRabbit();
-      RabbitLogger('creating channel');
+      const conn = await this.startRabbit(connectionOptions);
+      rabbitLogger('creating channel');
       try {
-        const channel = await conn.createConfirmChannel();
-        await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
+        const channel = await getNewChannel(
+          conn, { exchangeName, exchangeType, configs }
+        );
         await this.sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType);
         await afterPublish(channel, conn);
       } catch (e) {
-        RabbitLogger(`channel error ${e}`, 'error');
-        this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
+        rabbitLogger(`channel error ${e}`, 'error');
+        handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
       }
     } catch (e) {
-      RabbitLogger(`channel error ${e}`, 'error');
-      this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
+      rabbitLogger(`channel error ${e}`, 'error');
+      handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
     }
   }
 
@@ -129,7 +130,7 @@ export class RabbitMqInterface {
     return this;
   }
   async sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType) {
-    RabbitLogger('publishing message');
+    rabbitLogger('publishing message');
     const formattedContent = this.bufferIfy(content);
     await channel
       .publish(
@@ -137,30 +138,10 @@ export class RabbitMqInterface {
         routingKey,
         formattedContent,
         { ...configs.channel },
-        this.publisherCallback(exchangeName, routingKey, formattedContent, exchangeType),
+        publisherCallback(exchangeName, routingKey, formattedContent, exchangeType),
       );
-  }
-  publisherCallback(exchangeName, routingKey, formattedContent, exchangeType) {
-    return  (err) => {
-      if (err) {
-        this.handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType);
-      }
-      RabbitLogger('message sent');
-    };
-  }
-  handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType) {
 
-    RabbitLogger(`there was a problem ${err}`, 'error');
-
-    this.offlineQueue.push({
-      exchangeType,
-      message: {
-        exchangeName, routingKey, formattedContent,
-      },
-      isPublished: false,
-    });
   }
-
   /**
    * @method
    * @name startConsumer
@@ -170,50 +151,51 @@ export class RabbitMqInterface {
    *  @param {Object} queueConfig - a user can configure their consumers
    *  @param {Object} configs - a user can configure the queue
    *  @param {Array} topics - a list of topics for a topic exchange
+   * @param {Object} connectionOptions - connection options for connecting to rabbitmq
    * */
-  async startConsumer({
-                        exchangeName = '',
-                        exchangeType = 'direct',
-                        queueName = '',
-                        consumerCallback,
-                      },
-                      configs: any = {
-                        exchange: {
-                          durable: false,
-                        },
-                        queue: {
-                          exclusive: false,
-                        },
-                        consumer: {
-                          noAck: false,
-                        },
-                      },
-                      topics: string[] = []): Promise<any> {
+  async startConsumer(
+    {
+      exchangeName = '',
+      exchangeType = 'direct',
+      queueName = '',
+      consumerCallback,
+    },
+    configs: any = {
+      exchange: {
+        durable: false,
+      },
+      queue: {
+        exclusive: false,
+      },
+      consumer: {
+        noAck: false,
+      },
+    },
+    topics: string[] = [],
+    connectionOptions = {},
+  ): Promise<any> {
     try {
-      const conn = await this.startRabbit();
+      const conn = await this.startRabbit(connectionOptions);
       try {
-        const channel = await conn.createChannel();
-        RabbitLogger('asserting exchange');
-        await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
-        RabbitLogger('asserting queue');
+        const channel = await getNewChannel(conn, {exchangeName, exchangeType, configs});
         const queue = await channel.assertQueue(queueName, { ...configs.queue });
         if (topics.length > 0) {
-          RabbitLogger('binding topics to queue');
+          rabbitLogger('binding topics to queue');
           await this.mapTopics(channel, queue.queue, exchangeName, topics);
         } else {
-          RabbitLogger('binding queue to exchange');
+          rabbitLogger('binding queue to exchange');
           await channel.bindQueue(queue.queue, exchangeName, queue.queue);
         }
-        RabbitLogger('prefetching');
+        rabbitLogger('prefetching');
         await channel.prefetch(10);
-        RabbitLogger('consuming messages');
+        rabbitLogger('consuming messages');
         await channel.consume(queue.queue, consumerCallback(channel), { ...configs.consumer });
-        RabbitLogger('waiting on more messages');
+        rabbitLogger('waiting on more messages');
       } catch (e) {
-        RabbitLogger(`consumer channel error ${e}`, 'error');
+        rabbitLogger(`consumer channel error ${e}`, 'error');
       }
     } catch (e) {
-      RabbitLogger(`consumer connection error ${e}`, 'error');
+      rabbitLogger(`consumer connection error ${e}`, 'error');
     }
   }
 
@@ -275,14 +257,7 @@ export class RabbitMqInterface {
    * @param {Object | String} content - the content we want to turn into a buffer
    * */
   bufferIfy(content: any): Buffer {
-    let updatableContent = content;
-    if (
-      typeof updatableContent !== 'string' &&
-      typeof updatableContent === 'object'
-    ) {
-      updatableContent = JSON.stringify(content);
-    }
-    return Buffer.from(updatableContent);
+    return bufferIfy(content);
   }
 
   /**
@@ -293,7 +268,7 @@ export class RabbitMqInterface {
    * */
   handleRabbitErrror(err):void {
     if (err.message !== 'Connection closing') {
-      RabbitLogger(`conn error ${err.message}`, err.message);
+      rabbitLogger(`conn error ${err.message}`, err.message);
     }
   }
 
@@ -304,7 +279,7 @@ export class RabbitMqInterface {
    *  This will handleRabbitClose
    * */
   handleRabbitClose(): void {
-    RabbitLogger('Restarting', 'warn');
+    rabbitLogger('Restarting', 'warn');
     setTimeout(async() => this.startRabbit(), 1000);
   }
 
@@ -315,12 +290,7 @@ export class RabbitMqInterface {
    *  This will check to see if a value contains a valid json string
    * */
   isJsonString (str: any): boolean {
-    try {
-      JSON.parse(str);
-    } catch (e) {
-      return false;
-    }
-    return true;
+   return isJsonString(str);
   }
 
   /**
@@ -329,7 +299,7 @@ export class RabbitMqInterface {
    *  This will decode our buffer into an object, array, whatever it is.
    * */
   decodeToString(message): string {
-    return message.content.toString();
+    return decodeToString(message)
   }
 
   /**
@@ -338,13 +308,12 @@ export class RabbitMqInterface {
    *  This will decode our buffer into an object, array, whatever it is.
    * */
   decodeToJson(message: any): string | void {
-    if (this.isJsonString(message.content.toString())) {
-      return JSON.parse(message.content.toString());
-    }
-    RabbitLogger('message is not valid json', 'error');
+    return decodeToJson(message);
   }
 
   
 }
 
 module.exports.RabbitMqInterface = RabbitMqInterface;
+
+export default RabbitMqInterface;

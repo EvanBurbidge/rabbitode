@@ -1,29 +1,32 @@
-const { RabbitLogger } = require('./utils');
+import { rabbitLogger } from './utils';
+import { addToOfflineQueue } from './offline';
 
-async function afterPublish(channel: any, conn: any) {
+export async function afterPublish(channel: any, conn: any) {
   setTimeout(async() => {
-    logger('[Rabbitode] closing channel');
+    rabbitLogger('[Rabbitode] closing channel');
     await channel.close();
-    logger('[Rabbitode] closing connection');
+    rabbitLogger('[Rabbitode] closing connection');
     await conn.close();
   }, 2500);
 };
 
-const handlePublishError = (err, exchangeName, routingKey, formattedContent, exchangeType) => {
-  RabbitLogger(`[Rabbitode] there was a problem ${err}`, 'error');
-  this.offlineQueue.push({
+export const handlePublishError = (err, exchangeName, routingKey, formattedContent, exchangeType) => {
+  rabbitLogger(`[Rabbitode] there was a problem ${err}`, 'error');
+  addToOfflineQueue({
     exchangeType,
     message: {
-      exchangeName, routingKey, formattedContent,
+      exchangeName,
+      routingKey,
+      formattedContent,
     },
     isPublished: false,
   });
 }
 
-const publisherCallback = (
+export const publisherCallback = (
   exchangeName: string,
   routingKey:string,
-  formattedContent:string,
+  formattedContent:Buffer,
   exchangeType:string
 ) => err => err ? handlePublishError(
     err,
@@ -32,8 +35,10 @@ const publisherCallback = (
     formattedContent,
     exchangeType
   )
-  : logger('message sent');
+  : rabbitLogger('message sent');
 
 module.exports = {
   afterPublish,
+  publisherCallback,
+  handlePublishError,
 }
