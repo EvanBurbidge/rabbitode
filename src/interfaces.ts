@@ -22,4 +22,5 @@ export interface startConsumerProps {
   configs: any;
   connectionOptions: any;
   topics?: string[];
+  exchangeType: string;
 }

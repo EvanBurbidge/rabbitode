@@ -66,96 +66,53 @@ export class RabbitMqInterface {
   }
   /**
    * @method
+   * @name sendMessage
    * @description
-   * this method can be used to send direct messages
+   *  sends a message to a given exchange types
+   * @param {Object} senderProps - this is the config for our exchange name and other fields
+   * @property {Object} messageConfig - the message to be sent
+   * @property {Object} configs - extra config options
+   * @property {Object} connectionOptions - extra options to pass to rabbitmq start method
+   * @property {String} exchangeType - the type of exchange we want
+   * @property {Array} topics - the topics we want to subscibe to
    * */
-  async sendDirect(messageConfig: MqExchangeMessage, configs: any, connectionOptions: any): Promise<this> {
-    console.log(messageConfig);
-    await publishToExchange(messageConfig, 'direct', configs, connectionOptions, this.connectionUri);
+  async sendMessage({
+    messageConfig,
+    configs,
+    connectionOptions,
+    exchangeType
+  }): Promise<this> {
+    await publishToExchange(messageConfig, exchangeType, configs, connectionOptions, this.connectionUri);
     return this;
   }
   /**
    * @method
+   * @name startListener
    * @description
-   * this method can be used to send fanout messages
+   *  this will allow us to start a consumer for a given exchange type
+   * @param {Object} consumerProps - this is the config for our exchange name and other fields
+   * @property {Object} consumerConfig - the configuration for the queue consumer
+   * @property {Object} configs - the configuration for the queue consumer
+   * @property {Object} connectionOptions - extra options to pass to rabbitmq
+   * @property {String} exchangeType - the type of exchange we want
+   * @property {Array} topics - the topics we want to subscibe to
    * */
-  async sendFanout(messageConfig: MqExchangeMessage,  configs: any, connectionOptions: any): Promise<this> {
-    await publishToExchange(messageConfig, 'fanout', configs, connectionOptions, this.connectionUri);
-    return this;
-  }
-  /**
-   * @method
-   * @description
-   * this method can be used to send topic messages
-   * */
-  async sendTopic(messageConfig: MqExchangeMessage,  configs: any, connectionOptions: any): Promise<this> {
-    await publishToExchange(messageConfig, 'topic', configs, connectionOptions, this.connectionUri);
-    return this;
-  }
-  /**
-   * @method
-   * @name startDirectConsumer
-   * @description
-   *  this will allow us to start a direct consumer
-   * @param {Object} consumerConfig - this is the config for our exchange name and other fields
-   * */
-  async startDirectConsumer({
+  async startListener({
     consumerConfig,
     configs,
     connectionOptions,
-  }: startConsumerProps): Promise<this> {
-    await startConsumer({
-      queueConfig: { ...consumerConfig, exchangeType: 'direct' },
-      configs,
-      connectionOptions,
-      connectionUrl: this.connectionUri,
-    });
-    return this;
-  }
-  /**
-   * @method
-   * @name startFanoutConsumer
-   * @description
-   *  this will allow us to start a fanout consumer
-   * @param {Object} consumerConfig - this is the config for our exchange name and other fields
-   * */
-  async startFanoutConsumer({
-    consumerConfig,
-    configs,
-    connectionOptions
-  }: startConsumerProps): Promise<this> {
-    await startConsumer({
-      queueConfig: { ...consumerConfig, exchangeType: 'fanout' },
-      configs,
-      connectionOptions,
-      connectionUrl: this.connectionUri,
-    });
-    return this;
-  }
-  /**
-   * @method
-   * @name startTopicConsumer
-   * @description
-   *  this will allow us to start a topic consumer
-   * @param {Object} consumerConfig - this is the config for our exchange name and other fields
-   * @param {Array} topics - this is a list of topics we want the queue to listen for
-   * */
-  async startTopicConsumer({
-    consumerConfig,
-    configs,
-    connectionOptions,
+    exchangeType,
     topics,
   }: startConsumerProps): Promise<this> {
     await startConsumer({
-      queueConfig: { ...consumerConfig, exchangeType: 'topic' },
-      topics,
+      queueConfig: { ...consumerConfig, exchangeType },
       configs,
+      topics,
       connectionOptions,
       connectionUrl: this.connectionUri,
     });
     return this;
   }
-
   /**
    * @method
    * @name bufferIfy
@@ -217,10 +174,6 @@ export class RabbitMqInterface {
   decodeToJson(message: any): string | void {
     return decodeToJson(message);
   }
-
-  
 }
-
-module.exports.RabbitMqInterface = RabbitMqInterface;
 
 export default RabbitMqInterface;

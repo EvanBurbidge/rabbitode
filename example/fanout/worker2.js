@@ -14,5 +14,5 @@ rabbitInterface.startFanoutConsumer({
     queueName: '',
     consumerCallback: handleConsume,
   }
-}););
+});
 
