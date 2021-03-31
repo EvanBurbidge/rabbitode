@@ -1,5 +1,6 @@
 const amqp = require('amqplib');
-const { asyncForEach } = require('./utils');
+const { afterPublish } = require('./publishing');
+const { asyncForEach, RabbitLogger } = require('./utils');
 
 export interface MqExchangeMessage {
   exchangeName: string;
@@ -34,7 +35,7 @@ export class RabbitMqInterface {
   private offlineQueue: any[] = [];
 
   constructor() {
-    this.logger('[Rabbitode] is ready to use');
+    RabbitLogger('is ready to use');
   }
 
   /**
@@ -47,29 +48,26 @@ export class RabbitMqInterface {
     this.connectionUri = uri;
     return this;
   }
-
   /**
    * @method
    * @name endableDebugging
    * @description
    *  if this is called we will see debugging statements.
    * */
-  enableDebugging() {
+  enableDebugging():this {
     this.debug = true;
     return this;
   }
-
   /**
    * @method
    * @name disableDebugging
    * @description
    *  if this is called we will not debugging statements.
    * */
-  disableDebugging() {
+  disableDebugging():this {
     this.debug = false;
     return this;
   }
-
   /**
    * @method
    * @description
@@ -79,7 +77,6 @@ export class RabbitMqInterface {
   startRabbit(): Promise<any> {
     return amqp.connect(this.connectionUri);
   }
-
   /**
    * @method
    * @name publishToExchange
@@ -89,26 +86,32 @@ export class RabbitMqInterface {
    * @param {String} exchangeType - this is the type e.g. direct, fanout, topic
    * @param {Object} configs - a user can configure the exchanges and stuff whichever way they want
    * */
-  async publishToExchange({ exchangeName, routingKey, content },
-                          exchangeType: string,
-                          configs: any = {
-                            exchange: { durable: false },
-                            channel: { persistent: true },
-                          }): Promise<any> {
+  async publishToExchange(
+    {
+      exchangeName,
+      routingKey,
+      content,
+    }: MqExchangeMessage,
+    exchangeType: string,
+    configs: any = {
+      exchange: { durable: false },
+      channel: { persistent: true },
+    }
+  ): Promise<any> {
     try {
       const conn = await this.startRabbit();
-      this.logger('[Rabbitode] creating channel');
+      RabbitLogger('creating channel');
       try {
         const channel = await conn.createConfirmChannel();
         await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
-        this.sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType);
-        this.afterPublish(channel, conn);
+        await this.sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType);
+        await afterPublish(channel, conn);
       } catch (e) {
-        this.logger(`[Rabbitode] channel error ${e}`, 'error');
+        RabbitLogger(`channel error ${e}`, 'error');
         this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
       }
     } catch (e) {
-      this.logger(`[Rabbitode] channel error ${e}`, 'error');
+      RabbitLogger(`channel error ${e}`, 'error');
       this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
     }
   }
@@ -126,7 +129,7 @@ export class RabbitMqInterface {
     return this;
   }
   async sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType) {
-    this.logger('[Rabbitode] publishing message');
+    RabbitLogger('publishing message');
     const formattedContent = this.bufferIfy(content);
     await channel
       .publish(
@@ -142,20 +145,13 @@ export class RabbitMqInterface {
       if (err) {
         this.handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType);
       }
-      this.logger('[Rabbitode] message sent');
+      RabbitLogger('message sent');
     };
   }
-
-  afterPublish(channel, conn) {
-    setTimeout(async() => {
-      this.logger('[Rabbitode] closing channel');
-      await channel.close();
-      this.logger('[Rabbitode] closing connection');
-      await conn.close();
-    },         2500);
-  }
   handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType) {
-    this.logger(`[Rabbitode] there was a problem ${err}`, 'error');
+
+    RabbitLogger(`there was a problem ${err}`, 'error');
+
     this.offlineQueue.push({
       exchangeType,
       message: {
@@ -163,7 +159,6 @@ export class RabbitMqInterface {
       },
       isPublished: false,
     });
-    console.log(this.offlineQueue);
   }
 
   /**
@@ -198,27 +193,27 @@ export class RabbitMqInterface {
       const conn = await this.startRabbit();
       try {
         const channel = await conn.createChannel();
-        this.logger('[Rabbitode] asserting exchange');
+        RabbitLogger('asserting exchange');
         await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
-        this.logger('[Rabbitode] asserting queue');
+        RabbitLogger('asserting queue');
         const queue = await channel.assertQueue(queueName, { ...configs.queue });
         if (topics.length > 0) {
-          this.logger('[Rabbitode] binding topics to queue');
+          RabbitLogger('binding topics to queue');
           await this.mapTopics(channel, queue.queue, exchangeName, topics);
         } else {
-          this.logger('[Rabbitode] binding queue to exchange');
+          RabbitLogger('binding queue to exchange');
           await channel.bindQueue(queue.queue, exchangeName, queue.queue);
         }
-        this.logger('[Rabbitode] prefetching');
+        RabbitLogger('prefetching');
         await channel.prefetch(10);
-        this.logger('[Rabbitode] consuming messages');
+        RabbitLogger('consuming messages');
         await channel.consume(queue.queue, consumerCallback(channel), { ...configs.consumer });
-        this.logger('[Rabbitode] waiting on more messages');
+        RabbitLogger('waiting on more messages');
       } catch (e) {
-        this.logger(`[Rabbitode] consumer channel error ${e}`, 'error');
+        RabbitLogger(`consumer channel error ${e}`, 'error');
       }
     } catch (e) {
-      this.logger(`[Rabbitode] consumer connection error ${e}`, 'error');
+      RabbitLogger(`consumer connection error ${e}`, 'error');
     }
   }
 
@@ -298,7 +293,7 @@ export class RabbitMqInterface {
    * */
   handleRabbitErrror(err):void {
     if (err.message !== 'Connection closing') {
-      this.logger(`[Rabbitode] conn error ${err.message}`, err.message);
+      RabbitLogger(`conn error ${err.message}`, err.message);
     }
   }
 
@@ -309,7 +304,7 @@ export class RabbitMqInterface {
    *  This will handleRabbitClose
    * */
   handleRabbitClose(): void {
-    this.logger('[Rabbitode] Restarting', 'warn');
+    RabbitLogger('Restarting', 'warn');
     setTimeout(async() => this.startRabbit(), 1000);
   }
 
@@ -346,34 +341,10 @@ export class RabbitMqInterface {
     if (this.isJsonString(message.content.toString())) {
       return JSON.parse(message.content.toString());
     }
-    this.logger('[Rabbitode] message is not valid json', 'error');
+    RabbitLogger('message is not valid json', 'error');
   }
 
-  /**
-   * @method
-   * @name logger
-   * @description
-   *  This will either log or not log messages depending
-   *  on a debug flag set by users
-   * */
-  logger(message: string, level: string = 'log'): void {
-    if (this.debug) {
-      switch (level) {
-        case 'warning':
-          console.warn(message);
-          break;
-        case 'info':
-          console.info(message);
-          break;
-        case 'error':
-          console.error(message);
-          break;
-        default:
-          console.log(message);
-          break;
-      }
-    }
-  }
+  
 }
 
 module.exports.RabbitMqInterface = RabbitMqInterface;
