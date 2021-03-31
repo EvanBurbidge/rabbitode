@@ -1,6 +1,6 @@
 import { startRabbit } from './startRabbit';
 import { startConsumer } from './consumers'
-import {  publishToExchange } from './publishing';
+import {  publishToExchange } from './publisher';
 import { rabbitLogger } from './utils';
 import { bufferIfy, isJsonString, decodeToString, decodeToJson } from './encodings';
 import {
@@ -112,67 +112,6 @@ export class RabbitMqInterface {
       connectionUrl: this.connectionUri,
     });
     return this;
-  }
-  /**
-   * @method
-   * @name bufferIfy
-   * @description
-   *  This will turn our content into a buffer
-   * @param {Object | String} content - the content we want to turn into a buffer
-   * */
-  bufferIfy(content: any): Buffer {
-    return bufferIfy(content);
-  }
-
-  /**
-   * @method
-   * @name handleRabbitError
-   * @description
-   *  This will handleRabbitError
-   * */
-  handleRabbitError(err):void {
-    if (err.message !== 'Connection closing') {
-      rabbitLogger(`conn error ${err.message}`, err.message);
-    }
-  }
-
-  /**
-   * @method
-   * @name handleRabbitClose
-   * @description
-   *  This will handleRabbitClose
-   * */
-  handleRabbitClose(): void {
-    rabbitLogger('Restarting', 'warn');
-    setTimeout(async() => this.startRabbit({}), 1000);
-  }
-
-  /**
-   * @method
-   * @name isJsonString
-   * @description
-   *  This will check to see if a value contains a valid json string
-   * */
-  isJsonString (str: any): boolean {
-   return isJsonString(str);
-  }
-
-  /**
-   * @method
-   * @description
-   *  This will decode our buffer into an object, array, whatever it is.
-   * */
-  decodeToString(message): string {
-    return decodeToString(message)
-  }
-
-  /**
-   * @method
-   * @description
-   *  This will decode our buffer into an object, array, whatever it is.
-   * */
-  decodeToJson(message: any): string | void {
-    return decodeToJson(message);
   }
 }
 

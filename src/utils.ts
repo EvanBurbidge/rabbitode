@@ -35,4 +35,6 @@ export const getDefaultQueueConfig = () => ({
   queue: {
     exclusive: false,
   },
-})
+});
+
+export const getDefaultConsumerConfig = () => Object.assign({}, getDefaultQueueConfig(), { consumer: { noAck: false } });
