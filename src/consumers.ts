@@ -8,11 +8,8 @@ import { ConsumerConfig } from './interfaces';
 const baseConfig = Object.assign({}, getDefaultQueueConfig(), { consumer: { noAck: false } });
 
 export const mapTopicsToQueue = (channel, queue, exchangeName, topics): Promise<any> => new Promise(async (resolve) => {
-  const mappedTopics = [];
-  await asyncForEach(topics, async topic => {
-    const t = await channel.bindQueue(queue, exchangeName, topic);
-    mappedTopics.push(t);
-  });
+  const mappedTopics = topics.map(topic => channel.bindQueue(queue, exchangeName, topic));
+  console.log(mappedTopics);
   resolve(mappedTopics);
 });
 

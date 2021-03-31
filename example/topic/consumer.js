@@ -13,8 +13,11 @@ const myTopics = ['test.*', '*.test'];
 rabbitInterface
     .enableDebugging()
     .startTopicConsumer({
+      consumerConfig: {
         exchangeName: 'topic_test_exchange',
         exchangeType: 'topic',
         consumerCallback: handleConsume,
-    }, myTopics);
+      },
+      topics: myTopics,        
+    });
 
