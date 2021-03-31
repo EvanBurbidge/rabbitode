@@ -14,7 +14,10 @@
     "clean": "rm -rf ./dist",
     "uglify": "uglifyjs ./dist/rabbitode.js -o ./dist/rabbitode.min.js  -c toplevel,sequences=false -m",
     "minify": "jsmin -o ./dist/rabbitode.min.js ./dist/rabbitode.js",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "test-direct": "concurrently \"node ./example/direct/publish.js\" \"node ./example/direct/consume.js\"",
+    "test-topic": "concurrently \"node ./example/topic/producer.js\" \"node ./example/topic/consumer.js\"",
+    "test-fanout": "concurrently \"node ./example/fanout/publisher.js\" \"node ./example/fanout/worker1.js\" \"node ./example/fanout/worker2.js\""
   },
   "repository": {
     "type": "git",
@@ -30,7 +33,7 @@
     "amqplib": "^0.5.3",
     "await-to-js": "^2.1.1",
     "buffer-from": "^1.1.1",
-    "tslib": "^1.10.0"
+    "tslib": "^1.14.1"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.9",

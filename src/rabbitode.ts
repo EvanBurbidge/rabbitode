@@ -1,4 +1,5 @@
 const amqp = require('amqplib');
+const { asyncForEach } = require('./utils');
 
 export interface MqExchangeMessage {
   exchangeName: string;
@@ -228,11 +229,8 @@ export class RabbitMqInterface {
    *  If we have topics well need to map them and await the promise
    * */
   mapTopics(channel: any, queue, exchangeName: string, topics: string[]): Promise<any> {
-    return new Promise((resolve) => {
-      const newTopics = topics
-        .map(async topic => await channel
-          .bindQueue(queue, exchangeName, topic),
-        );
+    return new Promise(async (resolve) => {
+      const newTopics = await asyncForEach(topics, async topic => await channel.bindQueue(queue, exchangeName, topic));
       resolve(newTopics);
     });
   }
@@ -344,7 +342,7 @@ export class RabbitMqInterface {
    * @description
    *  This will decode our buffer into an object, array, whatever it is.
    * */
-  decodeToJson(message): any {
+  decodeToJson(message: any): string | void {
     if (this.isJsonString(message.content.toString())) {
       return JSON.parse(message.content.toString());
     }
