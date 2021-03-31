@@ -1,14 +1,27 @@
+import { Channel } from 'amqplib';
 import to from 'await-to-js';
 import { getNewChannel } from './channels';
-import { startRabbit } from './startRabbit';
+import { startRabbit } from './connection';
 import { StartConsumerProps } from './interfaces';
 import { rabbitLogger, getDefaultConsumerConfig } from './utils';
 
 
 const baseConfig = getDefaultConsumerConfig();
 
-export const mapTopicsToQueue = (channel, queue, exchangeName, topics): Promise<any> => new Promise(async (resolve) => {
-  const mappedTopics = topics.map(topic => channel.bindQueue(queue, exchangeName, topic));
+interface MapTopicsToQueueProps {
+  channel: Channel;
+  queue: any;
+  exchangeName: string;
+  topics: string[];
+}
+
+export const mapTopicsToQueue = ({
+  channel,
+  queue,
+  exchangeName,
+  topics,
+}: MapTopicsToQueueProps): Promise<any> => new Promise(async (resolve) => {
+  const mappedTopics = topics.map((topic:string) => channel.bindQueue(queue, exchangeName, topic));
   resolve(mappedTopics);
 });
 
@@ -45,7 +58,12 @@ export const startConsumer = async ({
     return false;
   }
   if (Boolean(topics.length)) {
-    await mapTopicsToQueue(channel, queue.queue, exchangeName, topics);
+    await mapTopicsToQueue({
+      topics,
+      channel,
+      exchangeName,
+      queue: queue.queue,
+    });
   } else {
     const [bindErr] = await to(channel.bindQueue(queue.queue, exchangeName, queue.queue));
     if (bindErr) {
