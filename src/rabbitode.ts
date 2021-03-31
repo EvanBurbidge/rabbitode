@@ -1,23 +1,13 @@
-const amqp = require('amqplib');
-const { asyncForEach } = require('./utils');
-
-export interface MqExchangeMessage {
-  exchangeName: string;
-  routingKey: string;
-  content: Buffer | string;
-}
-
-export interface MqTaskMessage {
-  queueName: string;
-  content: Buffer | string;
-}
-
-export interface ConsumerConfig {
-  exchangeName: string;
-  exchangeType: string;
-  queueName: string;
-  consumerCallback: (x: any) => (y: any) => void;
-}
+import { startRabbit } from './startRabbit';
+import { startConsumer } from './consumers'
+import {  publishToExchange } from './publishing';
+import { rabbitLogger } from './utils';
+import { bufferIfy, isJsonString, decodeToString, decodeToJson } from './encodings';
+import {
+  MqExchangeMessage,
+  ConsumerConfig,
+  startConsumerProps,
+} from './interfaces'
 
 /**
  * @class
@@ -28,15 +18,13 @@ export interface ConsumerConfig {
  *  those events
  * */
 export class RabbitMqInterface {
-
   public debug: boolean = false;
   public connectionUri: string = 'amqp://localhost';
-  private offlineQueue: any[] = [];
 
   constructor() {
-    this.logger('[Rabbitode] is ready to use');
+    rabbitLogger.bind(this);
+    rabbitLogger('is ready to use');
   }
-
   /**
    * @method
    * @name setRabbitUri
@@ -47,231 +35,84 @@ export class RabbitMqInterface {
     this.connectionUri = uri;
     return this;
   }
-
   /**
    * @method
    * @name endableDebugging
    * @description
    *  if this is called we will see debugging statements.
    * */
-  enableDebugging() {
+  enableDebugging():this {
     this.debug = true;
     return this;
   }
-
   /**
    * @method
    * @name disableDebugging
    * @description
    *  if this is called we will not debugging statements.
    * */
-  disableDebugging() {
+  disableDebugging():this {
     this.debug = false;
     return this;
   }
-
   /**
    * @method
    * @description
    * this method is called once upon start up
    * and the recursively anytime we have an error
    * */
-  startRabbit(): Promise<any> {
-    return amqp.connect(this.connectionUri);
+  startRabbit(connectionOptions = {}): Promise<any> {
+    return startRabbit(this.connectionUri, connectionOptions);
   }
-
   /**
    * @method
-   * @name publishToExchange
+   * @name sendMessage
    * @description
-   *  This will publish our item to an exchange
-   * @param {Object} messageConfig - the configuration of the message to be sent
-   * @param {String} exchangeType - this is the type e.g. direct, fanout, topic
-   * @param {Object} configs - a user can configure the exchanges and stuff whichever way they want
+   *  sends a message to a given exchange types
+   * @param {Object} senderProps - this is the config for our exchange name and other fields
+   * @property {Object} messageConfig - the message to be sent
+   * @property {Object} configs - extra config options
+   * @property {Object} connectionOptions - extra options to pass to rabbitmq start method
+   * @property {String} exchangeType - the type of exchange we want
+   * @property {Array} topics - the topics we want to subscibe to
    * */
-  async publishToExchange({ exchangeName, routingKey, content },
-                          exchangeType: string,
-                          configs: any = {
-                            exchange: { durable: false },
-                            channel: { persistent: true },
-                          }): Promise<any> {
-    try {
-      const conn = await this.startRabbit();
-      this.logger('[Rabbitode] creating channel');
-      try {
-        const channel = await conn.createConfirmChannel();
-        await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
-        this.sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType);
-        this.afterPublish(channel, conn);
-      } catch (e) {
-        this.logger(`[Rabbitode] channel error ${e}`, 'error');
-        this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
-      }
-    } catch (e) {
-      this.logger(`[Rabbitode] channel error ${e}`, 'error');
-      this.handlePublishError(e, exchangeName, routingKey, this.bufferIfy(content), exchangeType);
-    }
-  }
-
-  sendDirect(messageConfig: MqExchangeMessage, configs?: any): this {
-    this.publishToExchange(messageConfig, 'direct', configs);
+  async sendMessage({
+    messageConfig,
+    configs,
+    connectionOptions,
+    exchangeType
+  }): Promise<this> {
+    await publishToExchange(messageConfig, exchangeType, configs, connectionOptions, this.connectionUri);
     return this;
   }
-  sendFanout(messageConfig: MqExchangeMessage,  configs?: any): this {
-    this.publishToExchange(messageConfig, 'fanout', configs);
-    return this;
-  }
-  sendTopic(messageConfig: MqExchangeMessage,  configs?: any): this {
-    this.publishToExchange(messageConfig, 'topic', configs);
-    return this;
-  }
-  async sendPublishMessage(channel, configs, exchangeName, routingKey, content, exchangeType) {
-    this.logger('[Rabbitode] publishing message');
-    const formattedContent = this.bufferIfy(content);
-    await channel
-      .publish(
-        exchangeName,
-        routingKey,
-        formattedContent,
-        { ...configs.channel },
-        this.publisherCallback(exchangeName, routingKey, formattedContent, exchangeType),
-      );
-  }
-  publisherCallback(exchangeName, routingKey, formattedContent, exchangeType) {
-    return  (err) => {
-      if (err) {
-        this.handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType);
-      }
-      this.logger('[Rabbitode] message sent');
-    };
-  }
-
-  afterPublish(channel, conn) {
-    setTimeout(async() => {
-      this.logger('[Rabbitode] closing channel');
-      await channel.close();
-      this.logger('[Rabbitode] closing connection');
-      await conn.close();
-    },         2500);
-  }
-  handlePublishError(err, exchangeName, routingKey, formattedContent, exchangeType) {
-    this.logger(`[Rabbitode] there was a problem ${err}`, 'error');
-    this.offlineQueue.push({
-      exchangeType,
-      message: {
-        exchangeName, routingKey, formattedContent,
-      },
-      isPublished: false,
+  /**
+   * @method
+   * @name startListener
+   * @description
+   *  this will allow us to start a consumer for a given exchange type
+   * @param {Object} consumerProps - this is the config for our exchange name and other fields
+   * @property {Object} consumerConfig - the configuration for the queue consumer
+   * @property {Object} configs - the configuration for the queue consumer
+   * @property {Object} connectionOptions - extra options to pass to rabbitmq
+   * @property {String} exchangeType - the type of exchange we want
+   * @property {Array} topics - the topics we want to subscibe to
+   * */
+  async startListener({
+    consumerConfig,
+    configs,
+    connectionOptions,
+    exchangeType,
+    topics,
+  }: startConsumerProps): Promise<this> {
+    await startConsumer({
+      queueConfig: { ...consumerConfig, exchangeType },
+      configs,
+      topics,
+      connectionOptions,
+      connectionUrl: this.connectionUri,
     });
-    console.log(this.offlineQueue);
-  }
-
-  /**
-   * @method
-   * @name startConsumer
-   * @description
-   *  This will allow us to consume various sorts of queues, it MUST take a
-   *  consumer call back param
-   *  @param {Object} queueConfig - a user can configure their consumers
-   *  @param {Object} configs - a user can configure the queue
-   *  @param {Array} topics - a list of topics for a topic exchange
-   * */
-  async startConsumer({
-                        exchangeName = '',
-                        exchangeType = 'direct',
-                        queueName = '',
-                        consumerCallback,
-                      },
-                      configs: any = {
-                        exchange: {
-                          durable: false,
-                        },
-                        queue: {
-                          exclusive: false,
-                        },
-                        consumer: {
-                          noAck: false,
-                        },
-                      },
-                      topics: string[] = []): Promise<any> {
-    try {
-      const conn = await this.startRabbit();
-      try {
-        const channel = await conn.createChannel();
-        this.logger('[Rabbitode] asserting exchange');
-        await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
-        this.logger('[Rabbitode] asserting queue');
-        const queue = await channel.assertQueue(queueName, { ...configs.queue });
-        if (topics.length > 0) {
-          this.logger('[Rabbitode] binding topics to queue');
-          await this.mapTopics(channel, queue.queue, exchangeName, topics);
-        } else {
-          this.logger('[Rabbitode] binding queue to exchange');
-          await channel.bindQueue(queue.queue, exchangeName, queue.queue);
-        }
-        this.logger('[Rabbitode] prefetching');
-        await channel.prefetch(10);
-        this.logger('[Rabbitode] consuming messages');
-        await channel.consume(queue.queue, consumerCallback(channel), { ...configs.consumer });
-        this.logger('[Rabbitode] waiting on more messages');
-      } catch (e) {
-        this.logger(`[Rabbitode] consumer channel error ${e}`, 'error');
-      }
-    } catch (e) {
-      this.logger(`[Rabbitode] consumer connection error ${e}`, 'error');
-    }
-  }
-
-  /**
-   * @method
-   * @name mapTopics
-   * @description
-   *  If we have topics well need to map them and await the promise
-   * */
-  mapTopics(channel: any, queue, exchangeName: string, topics: string[]): Promise<any> {
-    return new Promise(async (resolve) => {
-      const newTopics = await asyncForEach(topics, async topic => await channel.bindQueue(queue, exchangeName, topic));
-      resolve(newTopics);
-    });
-  }
-
-  /**
-   * @method
-   * @name startDirectConsumer
-   * @description
-   *  this will allow us to start a direct consumer
-   * @param {Object} consumerConfig - this is the config for our exchange name and other fields
-   * */
-  startDirectConsumer(consumerConfig: ConsumerConfig, configs?:any): this {
-    this.startConsumer({ ...consumerConfig, exchangeType: 'direct' }, configs);
     return this;
   }
-
-  /**
-   * @method
-   * @name startFanoutConsumer
-   * @description
-   *  this will allow us to start a fanout consumer
-   * @param {Object} consumerConfig - this is the config for our exchange name and other fields
-   * */
-  startFanoutConsumer(consumerConfig: ConsumerConfig, configs?:any): this {
-    this.startConsumer({ ...consumerConfig, exchangeType: 'fanout' }, configs);
-    return this;
-  }
-
-  /**
-   * @method
-   * @name startTopicConsumer
-   * @description
-   *  this will allow us to start a topic consumer
-   * @param {Object} consumerConfig - this is the config for our exchange name and other fields
-   * @param {Array} topics - this is a list of topics we want the queue to listen for
-   * */
-  startTopicConsumer(consumerConfig: ConsumerConfig, topics: string[], configs?:any): this {
-    this.startConsumer({ ...consumerConfig, exchangeType: 'topic' }, configs, topics);
-    return this;
-  }
-
   /**
    * @method
    * @name bufferIfy
@@ -280,25 +121,18 @@ export class RabbitMqInterface {
    * @param {Object | String} content - the content we want to turn into a buffer
    * */
   bufferIfy(content: any): Buffer {
-    let updatableContent = content;
-    if (
-      typeof updatableContent !== 'string' &&
-      typeof updatableContent === 'object'
-    ) {
-      updatableContent = JSON.stringify(content);
-    }
-    return Buffer.from(updatableContent);
+    return bufferIfy(content);
   }
 
   /**
    * @method
-   * @name handleRabbitErrror
+   * @name handleRabbitError
    * @description
-   *  This will handleRabbitErrror
+   *  This will handleRabbitError
    * */
-  handleRabbitErrror(err):void {
+  handleRabbitError(err):void {
     if (err.message !== 'Connection closing') {
-      this.logger(`[Rabbitode] conn error ${err.message}`, err.message);
+      rabbitLogger(`conn error ${err.message}`, err.message);
     }
   }
 
@@ -309,8 +143,8 @@ export class RabbitMqInterface {
    *  This will handleRabbitClose
    * */
   handleRabbitClose(): void {
-    this.logger('[Rabbitode] Restarting', 'warn');
-    setTimeout(async() => this.startRabbit(), 1000);
+    rabbitLogger('Restarting', 'warn');
+    setTimeout(async() => this.startRabbit({}), 1000);
   }
 
   /**
@@ -320,12 +154,7 @@ export class RabbitMqInterface {
    *  This will check to see if a value contains a valid json string
    * */
   isJsonString (str: any): boolean {
-    try {
-      JSON.parse(str);
-    } catch (e) {
-      return false;
-    }
-    return true;
+   return isJsonString(str);
   }
 
   /**
@@ -334,7 +163,7 @@ export class RabbitMqInterface {
    *  This will decode our buffer into an object, array, whatever it is.
    * */
   decodeToString(message): string {
-    return message.content.toString();
+    return decodeToString(message)
   }
 
   /**
@@ -343,37 +172,8 @@ export class RabbitMqInterface {
    *  This will decode our buffer into an object, array, whatever it is.
    * */
   decodeToJson(message: any): string | void {
-    if (this.isJsonString(message.content.toString())) {
-      return JSON.parse(message.content.toString());
-    }
-    this.logger('[Rabbitode] message is not valid json', 'error');
-  }
-
-  /**
-   * @method
-   * @name logger
-   * @description
-   *  This will either log or not log messages depending
-   *  on a debug flag set by users
-   * */
-  logger(message: string, level: string = 'log'): void {
-    if (this.debug) {
-      switch (level) {
-        case 'warning':
-          console.warn(message);
-          break;
-        case 'info':
-          console.info(message);
-          break;
-        case 'error':
-          console.error(message);
-          break;
-        default:
-          console.log(message);
-          break;
-      }
-    }
+    return decodeToJson(message);
   }
 }
 
-module.exports.RabbitMqInterface = RabbitMqInterface;
+export default RabbitMqInterface;

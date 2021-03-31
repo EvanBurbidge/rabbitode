@@ -10,8 +10,10 @@ const rabbitInterface = new RabbitMqInterface();
 rabbitInterface
   .enableDebugging()
   .startFanoutConsumer({
-    exchangeName: 'fanout_test_exchange',
-    exchangeType: 'fanout',
-    queueName: '',
-    consumerCallback: handleConsume,
+    consumerConfig: {
+      exchangeName: 'fanout_test_exchange',
+      exchangeType: 'fanout',
+      queueName: '',
+      consumerCallback: handleConsume,
+    }
   });
