@@ -125,7 +125,7 @@ export class RabbitMqInterface {
     connectionOptions
   }: startConsumerProps): Promise<this> {
     await startConsumer({
-      queueConfig: { ...consumerConfig, exchangeType: 'fanour' },
+      queueConfig: { ...consumerConfig, exchangeType: 'fanout' },
       configs,
       connectionOptions,
       connectionUrl: this.connectionUri,

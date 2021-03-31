@@ -8,9 +8,11 @@ const handleConsume = channel => msg => {
 const rabbitInterface = new RabbitMqInterface();
 
 rabbitInterface.startFanoutConsumer({
+  consumerConfig: {
     exchangeName: 'fanout_test_exchange',
     exchangeType: 'fanout',
     queueName: '',
     consumerCallback: handleConsume,
-});
+  }
+}););
 
