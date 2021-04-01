@@ -4,7 +4,7 @@
   "description": "A client wrapper to allow the usage of rabbitmq, amqplib with nodejs",
   "main": "dist/rabbitode.min.js",
   "module": "dist/rabbitode.es5.js",
-  "typings": "dist/rabbitode.d.ts",
+  "typings": "lib/rabbitode.d.ts",
   "keywords": [
     "rabbitmq",
     "amqplib",

@@ -10,7 +10,7 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "declarationDir": "./types",
+    "declarationDir": "./lib",
     "outDir": "./lib",
     "importHelpers": true,
     "typeRoots": [
