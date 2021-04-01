@@ -62,7 +62,7 @@ export interface SendMessageProps {
   configs?: any;
   connectionOptions?: any;
   connectionUrl: string;
-  publishCallback(t:PublishCallbackInterface): any;
+  publishCallback?:(t:PublishCallbackInterface) => any;
 }
 
 export interface HandlePublishErrorProps extends PublishCallbackInterface{
