@@ -18,7 +18,7 @@ I reccomend docker for local development.
 **Direct**
  
 ```javascript
-const { conn, channel } = await sendMessage({
+await sendMessage({
   messageConfig: {
       exchangeName: 'direct_test_exchange',
       routingKey: `direct_test_queue`,
@@ -34,25 +34,172 @@ const { conn, channel } = await sendMessage({
     // something here
   }
 });
+```
 
+**Fanout**
+ 
+```javascript
+await sendMessage({
+  messageConfig: {
+      exchangeName: 'fanout_test_exchange',
+      routingKey: `fanout_test_queue`,
+      content: {
+          message: `this is a test message for direct stuff ${count}`
+      }
+  },
+  exchangeType: 'fanout',
+  connectionUrl: 'amqp://localhost',
+  configs: {}, // replace this with queue configs from amqplib
+  connectionOptions: {},
+  publishCallback: () => {
+    // something here
+  }
+});
+```
+**Topic**
+ 
+```javascript
+await sendMessage({
+  messageConfig: {
+      exchangeName: 'topic_test_exchange',
+      routingKey: `topic.key`,
+      content: {
+          message: `this is a test message for direct stuff ${count}`
+      }
+  },
+  exchangeType: 'topic',
+  connectionUrl: 'amqp://localhost',
+  configs: {}, // replace this with queue configs from amqplib
+  connectionOptions: {},
+  publishCallback: () => {
+    // something here
+  }
+});
 ```
 ### Consuming messages
 
+**Direct**
+
+```javascript
+const { startConsumer } = require('rabbitode/lib/consumers');
+const { decodeToJson, decodeToString } = require('rabbitode/lib/encoding');
+
+const handleConsume = channel => msg => {
+  console.log(decodeToString(msg));
+  console.log(decodeToJson(msg));
+  channel.ack(msg);
+};
+
+startConsumer({
+  queueConfig: {
+    exchangeName: 'direct_test_exchange',
+    exchangeType: 'direct',
+    queueName: 'direct_test_queue',
+    consumerCallback: handleConsume,
+  },
+  connectionUrl: 'amqp://localhost',
+});
+```
+
+**Fanout**
+```javascript
+const { startConsumer } = require('rabbitode/lib/consumers');
+const { decodeToJson, decodeToString } = require('rabbitode/lib/encoding');
+
+const handleConsume = channel => msg => {
+  console.log(decodeToString(msg));
+  console.log(decodeToJson(msg));
+  channel.ack(msg);
+};
+
+startConsumer({
+  queueConfig: {
+    exchangeName: 'fanout_test_exchange',
+    exchangeType: 'fanout',
+    queueName: 'fanout_test_queue',
+    consumerCallback: handleConsume,
+  },
+  connectionUrl: 'amqp://localhost',
+});
+```
+
+**Topic**
+```javascript
+const { startConsumer } = require('rabbitode/lib/consumers');
+const { decodeToJson, decodeToString } = require('rabbitode/lib/encoding');
+
+const handleConsume = channel => msg => {
+  console.log(decodeToString(msg));
+  console.log(decodeToJson(msg));
+  console.log(msg.fields.routingKey);
+  channel.ack(msg);
+};
+
+startConsumer({
+  queueConfig: {
+    exchangeName: 'topic_test_exchange',
+    exchangeType: 'topic',
+    queueName: 'topic_test_queue',
+    consumerCallback: handleConsume,
+  },
+  connectionUrl: 'amqp://localhost',
+  topics: ['test.*', '*.test'],
+});
+
+```
 ### Turning off logging
-
-### Closing connections
-
+```javascript
+const Logger = require('rabbitode/lib/logger');
+logger.setDebug(false);
+```
 ### Getting JSON from a message
+```javascript
+const { startConsumer } = require('rabbitode/lib/consumers');
+const { decodeToJson } = require('rabbitode/lib/encoding');
 
+const handleConsume = channel => msg => {
+  console.log(decodeToJson(msg));
+  channel.ack(msg);
+};
+```
 ### Getting a string from a message
+```javascript
+const { startConsumer } = require('rabbitode/lib/consumers');
+const { decodeToString } = require('rabbitode/lib/encoding');
 
-### Encoding your message to a buffer
-
+const handleConsume = channel => msg => {
+  console.log(decodeToString(msg));
+  channel.ack(msg);
+};
+```
 ### Getting default configs
+```javascript
+const {
+  getDefaultQueueConfig,
+  getDefaultConsumerConfig,
+} = require('rabbitode/lib/utils');
 
+const baseconfig = getDefaultQueueConfig();
+const consumerConfig = getDefaultConsumerConfig();
+```
 ### Getting failed "offline" messages
+```javascript
+const { getOfflineQueue } = require('rabbitode/lib/offline');
+const queue = getOfflineQueue();
 
+// once your connection is backup you can loop the queue and send again
 
+queue.forEach(config => {
+  sendMessage({
+    messageConfig: config.message,
+    exchangeType: config.exchangeType, // direct, fanout, exchange are all available types
+    connectionUrl: 'amqp://localhost',
+    configs: {},
+    connectionOptions: {},
+    publishCallback: () => {},
+  });
+});
+```
 
 
 # Changes
