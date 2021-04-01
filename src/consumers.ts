@@ -1,5 +1,5 @@
 import to from 'await-to-js';
-import { rabbitLogger, } from './logger';
+import Logger from './logger';
 import { handleCreateChannel } from './channels';
 import { getDefaultConsumerConfig } from './utils';
 import { StartConsumerProps, MapTopicsToQueueProps, CreateChannelConfig, CreateChannelReturn } from './interfaces';
@@ -35,7 +35,7 @@ export const startConsumer = async ({
 
   const [queueErr, queue]: any = await to(channel.assertQueue(queueName, { ...configs.queue }));
   if (queueErr) {
-    rabbitLogger(`issue with asseting queue ${queueErr}`);
+    Logger.Log(`issue with asseting queue ${queueErr}`);
     return false;
   }
   if (Boolean(topics.length)) {
@@ -48,18 +48,18 @@ export const startConsumer = async ({
   } else {
     const [bindErr] = await to(channel.bindQueue(queue.queue, exchangeName, queue.queue));
     if (bindErr) {
-      rabbitLogger(`problem binding to queue ${bindErr}`);
+      Logger.Log(`problem binding to queue ${bindErr}`);
       return false;
     }
   }
   const [prefetchErr] = await to(channel.prefetch(prefetchAmount));
   if (prefetchErr) {
-    rabbitLogger(`something went wrong with prefetching ${prefetchErr}`);
+    Logger.Log(`something went wrong with prefetching ${prefetchErr}`);
     return false;
   }
   const [consumeErr] = await to(channel.consume(queue.queue, consumerCallback(channel), { ...configs.consumer }));
   if (consumeErr) {
-    rabbitLogger(`something went wrong with consuming ${consumeErr}`);
+    Logger.Log(`something went wrong with consuming ${consumeErr}`);
     return false;
   }
   return true;

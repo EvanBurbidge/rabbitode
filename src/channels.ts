@@ -1,5 +1,5 @@
 import { Channel, Connection } from "amqplib";
-import { rabbitLogger } from './logger';
+import Logger from './logger';
 import { startRabbit } from './connection';
 import { CreateChannelConfig, ConsumerConfig, CreateChannelReturn } from "./interfaces";
 
@@ -34,7 +34,7 @@ export const handleCreateChannel = (
       channel,
     });
   } catch (error) {
-    rabbitLogger(`channel connection error ${error}`, 'error');
+    Logger.Log(`channel connection error ${error}`, 'error');
     reject();
   }
 })

@@ -1,4 +1,4 @@
-import { rabbitLogger } from './logger';
+import Logger from './logger';
 import { addToOfflineQueue } from './offline';
 import { HandlePublishErrorProps } from './interfaces'
 
@@ -9,7 +9,7 @@ export const handlePublishError = ({
   exchangeName,
   content,
 }: HandlePublishErrorProps): void => {
-  rabbitLogger(`[Rabbitode] there was a problem ${err}`, 'error');
+  Logger.Log(`[Rabbitode] there was a problem ${err}`, 'error');
   addToOfflineQueue({
     exchangeType,
     message: {

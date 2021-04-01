@@ -1,5 +1,5 @@
 import to from 'await-to-js';
-import { rabbitLogger } from './logger';
+import Logger from './logger';
 import { bufferIfy } from './encoding';
 import { getNewChannel } from './channels';
 import { getDefaultConsumerConfig } from './utils';
@@ -23,7 +23,7 @@ export const publishMessageToQueue = async ({
   exchangeType,
   publishCallback,
 }: SendPublishMessageProps) => {
-  rabbitLogger('publishing message');
+  Logger.Log('publishing message');
   try {
     await channel.publish(
       exchangeName,
@@ -38,7 +38,7 @@ export const publishMessageToQueue = async ({
       }),
     );
   } catch(error) {
-    rabbitLogger(error, 'error');
+    Logger.Log(error, 'error');
   }
 }
 
@@ -83,7 +83,7 @@ export const sendMessage = async ({
     content,
     routingKey
   } = messageConfig;
-  rabbitLogger('starting publisher');
+  Logger.Log('starting publisher');
   const conn: Connection = await startRabbit(connectionUrl, connectionOptions);
   const [channelErr, channel]: any = await to(getNewChannel(conn, { exchangeName , exchangeType, configs }));
   if (channelErr) {
@@ -96,7 +96,7 @@ export const sendMessage = async ({
     });
     return false;
   }
-  rabbitLogger('channel established');
+  Logger.Log('channel established');
   try {
     await publishMessageToQueue({
       channel,
@@ -107,7 +107,7 @@ export const sendMessage = async ({
       publishCallback,
       content: bufferIfy(content),
     });
-    rabbitLogger('message published');
+    Logger.Log('message published');
   } catch (publishErr) {
     handlePublishError({
       routingKey,
@@ -120,7 +120,7 @@ export const sendMessage = async ({
   }
   try {
     await closeRabbit(conn, channel);
-    rabbitLogger('connection closed');
+    Logger.Log('connection closed');
   } catch (closeError) {
     handlePublishError({
       routingKey,

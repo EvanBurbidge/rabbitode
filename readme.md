@@ -38,7 +38,6 @@ I reccomend docker for local development.
 ### v-2.0.0
  - Most methods return this to enable method chaining 
  - send method no longer available, use sendDirect, sendTopic, sendFanout instead
- 
 ### v-2.0.1
   - Security Vulnerability fixes in package.json
   
@@ -46,8 +45,15 @@ I reccomend docker for local development.
   - Security Vulnerability fixes in package.json
   - Update build process for smaller files
 
+### v-3.0.0
+  - Total refactor to functional components
+  - Reduced methods single method for send / consume
+  - Able to be imported as individual files or as a main rabbitode file
+  - Total removal of original Rabbitode class
+  - Added tests to ensure methods call as required
+  - More indepth types and logging
 ## Copyright
-Copyright 2018 Evan Burbidge
+Copyright 2021 Evan Burbidge
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

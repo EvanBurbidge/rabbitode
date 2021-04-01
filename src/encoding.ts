@@ -1,4 +1,4 @@
-import { rabbitLogger } from './logger';
+import Logger from './logger';
 
 export interface Message {
   content: any;
@@ -31,5 +31,5 @@ export const decodeToJson = (message:Message ): string | void => {
   if (isJsonString(str)) {
     return JSON.parse(str);
   }
-  rabbitLogger('message is not valid json', 'error');
+  Logger.Log('message is not valid json', 'error');
 }
