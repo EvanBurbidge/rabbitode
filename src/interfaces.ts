@@ -59,8 +59,8 @@ export interface PublishCallbackInterface {
 export interface SendMessageProps {
   messageConfig: MqExchangeMessage;
   exchangeType: string;
-  configs: any;
-  connectionOptions: any;
+  configs?: any;
+  connectionOptions?: any;
   connectionUrl: string;
   publishCallback(t:PublishCallbackInterface): any;
 }
