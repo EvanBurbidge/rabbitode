@@ -18,6 +18,7 @@
     "uglify": "uglifyjs ./dist/rabbitode.js -o ./dist/rabbitode.min.js  -c toplevel,sequences=false -m",
     "minify": "jsmin -o ./dist/rabbitode.min.js ./dist/rabbitode.js",
     "watch": "tsc -w",
+    "preversion": "npm run build",
     "test-direct": "concurrently \"node ./example/direct/publish.js\" \"node ./example/direct/consume.js\"",
     "test-topic": "concurrently \"node ./example/topic/producer.js\" \"node ./example/topic/consumer.js\"",
     "test-fanout": "concurrently \"node ./example/fanout/publisher.js\" \"node ./example/fanout/worker1.js\" \"node ./example/fanout/worker2.js\""
