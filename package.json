@@ -13,7 +13,7 @@
   "scripts": {
     "prebuild": "rimraf dist && rimraf lib && rimraf types",
     "build": "tsc --module commonjs && rollup -c rollup.config.ts",
-    "start": "rollup -c rollup.config.ts -w",
+    "start": "concurrently \"rollup -c rollup.config.ts -w\"",
     "clean": "rm -rf ./dist",
     "uglify": "uglifyjs ./dist/rabbitode.js -o ./dist/rabbitode.min.js  -c toplevel,sequences=false -m",
     "minify": "jsmin -o ./dist/rabbitode.min.js ./dist/rabbitode.js",

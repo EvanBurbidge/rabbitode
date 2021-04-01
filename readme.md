@@ -18,6 +18,7 @@ I reccomend docker for local development.
 **Direct**
 
 ```javascript
+// const { exchangeTypes, sendMessage, getDefaultQueueConfig } = require('rabbitode') <--- could also be this then use exchangeTypes.DIRECT
 const { DIRECT } = require('rabbitode/lib/exchangeTypes');
 const { sendMessage } = require('rabbitode/lib/sendMessage');
 const { getDefaultQueueConfig } = require('rabbitode/lib/utils');
@@ -43,6 +44,7 @@ await sendMessage({
 **Fanout**
  
 ```javascript
+// const { exchangeTypes, sendMessage, getDefaultQueueConfig } = require('rabbitode') <--- could also be this then use exchangeTypes.FANOUT
 const { FANOUT } = require('rabbitode/lib/exchangeTypes');
 const { sendMessage } = require('rabbitode/lib/sendMessage');
 const { getDefaultQueueConfig } = require('rabbitode/lib/utils');
@@ -59,14 +61,13 @@ await sendMessage({
   connectionUrl: 'amqp://localhost',
   configs: getDefaultQueueConfig(), // replace this with queue configs from amqplib
   connectionOptions: {},
-  publishCallback: () => {
-    // something here
-  }
+  publishCallback: () => {}
 });
 ```
 **Topic**
  
 ```javascript
+// const { exchangeTypes, sendMessage, getDefaultQueueConfig } = require('rabbitode') <--- could also be this then use exchangeTypes.TOPIC
 const { TOPIC } = require('rabbitode/lib/exchangeTypes');
 const { sendMessage } = require('rabbitode/lib/sendMessage');
 const { getDefaultQueueConfig } = require('rabbitode/lib/utils');
