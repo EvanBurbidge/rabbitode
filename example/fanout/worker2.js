@@ -1,9 +1,5 @@
-const { setDebug } = require('../../lib/logger');
 const { startConsumer } = require('../../lib/consumers');
 const { decodeToJson, decodeToString } = require('../../lib/encoding');
-
-
-setDebug(false);
 
 const handleConsume = channel => msg => {
   console.log(decodeToString(msg));
