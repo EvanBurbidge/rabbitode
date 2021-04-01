@@ -15,6 +15,27 @@ I reccomend docker for local development.
 # Api
 ### Sending Messages
 
+**Direct**
+ 
+```javascript
+const { conn, channel } = await sendMessage({
+  messageConfig: {
+      exchangeName: 'direct_test_exchange',
+      routingKey: `direct_test_queue`,
+      content: {
+        message: `this is a test message for direct connection`
+      }
+  },
+  exchangeType: 'direct', // direct, fanout, exchange are all available types
+  connectionUrl: 'amqp://localhost',
+  configs: {},
+  connectionOptions: {},
+  publishCallback: () => {
+    // something here
+  }
+});
+
+```
 ### Consuming messages
 
 ### Turning off logging
