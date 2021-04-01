@@ -1,20 +1,21 @@
-let {RabbitMqInterface} = require('../../dist/rabbitode.min');
-
-let rabbitInterface = new RabbitMqInterface();
+const { startConsumer } = require('../../lib/consumers');
+const { decodeToJson, decodeToString } = require('../../lib/encoding');
 
 const handleConsume = channel => msg => {
-  console.log(rabbitInterface.decodeToString(msg));
-  console.log(rabbitInterface.decodeToJson(msg));
+  console.log(decodeToString(msg));
+  console.log(decodeToJson(msg));
   console.log(msg.fields.routingKey);
   channel.ack(msg);
 };
-const myTopics = ['test.*', '*.test'];
 
-rabbitInterface
-    .enableDebugging()
-    .startTopicConsumer({
-        exchangeName: 'topic_test_exchange',
-        exchangeType: 'topic',
-        consumerCallback: handleConsume,
-    }, myTopics);
+startConsumer({
+  queueConfig: {
+    exchangeName: 'topic_test_exchange',
+    exchangeType: 'topic',
+    queueName: 'topic_test_queue',
+    consumerCallback: handleConsume,
+  },
+  connectionUrl: 'amqp://localhost',
+  topics: ['test.*', '*.test'],
+});
 
