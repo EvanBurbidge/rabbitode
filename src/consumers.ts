@@ -24,14 +24,14 @@ export const startConsumer = async ({
   connectionUrl = '',
   prefetchAmount = 10,
 }: StartConsumerProps
-): Promise<boolean> => {
+): Promise<boolean | CreateChannelReturn> => {
   const {
     exchangeName,
     queueName,
     consumerCallback,
   } = queueConfig;
   
-  const { channel }: CreateChannelReturn = await handleCreateChannel(queueConfig, connectionUrl, connectionOptions, configs);
+  const { channel, conn }: CreateChannelReturn = await handleCreateChannel(queueConfig, connectionUrl, connectionOptions, configs);
 
   const [queueErr, queue]: any = await to(channel.assertQueue(queueName, { ...configs.queue }));
   if (queueErr) {
@@ -62,5 +62,7 @@ export const startConsumer = async ({
     Logger.Log(`something went wrong with consuming ${consumeErr}`);
     return false;
   }
-  return true;
+  return {
+    channel, conn
+  };
 }

@@ -96,6 +96,7 @@ await sendMessage({
 **Direct**
 
 ```javascript
+const { closeRabbit } = require('rabbitode/lib/connection');
 const { startConsumer } = require('rabbitode/lib/consumers');
 const { decodeToJson, decodeToString } = require('rabbitode/lib/encoding');
 
@@ -105,7 +106,7 @@ const handleConsume = channel => msg => {
   channel.ack(msg);
 };
 
-startConsumer({
+const { conn, channel } = startConsumer({
   queueConfig: {
     exchangeName: 'direct_test_exchange',
     exchangeType: 'direct',
@@ -114,10 +115,12 @@ startConsumer({
   },
   connectionUrl: 'amqp://localhost',
 });
+await closeRabbit(conn, channel);
 ```
 
 **Fanout**
 ```javascript
+const { closeRabbit } = require('rabbitode/lib/connection');
 const { startConsumer } = require('rabbitode/lib/consumers');
 const { decodeToJson, decodeToString } = require('rabbitode/lib/encoding');
 
@@ -127,7 +130,7 @@ const handleConsume = channel => msg => {
   channel.ack(msg);
 };
 
-startConsumer({
+const { conn, channel } = startConsumer({
   queueConfig: {
     exchangeName: 'fanout_test_exchange',
     exchangeType: 'fanout',
@@ -136,10 +139,14 @@ startConsumer({
   },
   connectionUrl: 'amqp://localhost',
 });
+
+await closeRabbit(conn, channel);
+
 ```
 
 **Topic**
 ```javascript
+const { closeRabbit } = require('rabbitode/lib/connection');
 const { startConsumer } = require('rabbitode/lib/consumers');
 const { decodeToJson, decodeToString } = require('rabbitode/lib/encoding');
 
@@ -150,7 +157,7 @@ const handleConsume = channel => msg => {
   channel.ack(msg);
 };
 
-startConsumer({
+const { conn, channel } = startConsumer({
   queueConfig: {
     exchangeName: 'topic_test_exchange',
     exchangeType: 'topic',
@@ -160,7 +167,7 @@ startConsumer({
   connectionUrl: 'amqp://localhost',
   topics: ['test.*', '*.test'],
 });
-
+await closeRabbit(conn, channel);
 ```
 ### Turning off logging
 ```javascript

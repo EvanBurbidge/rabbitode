@@ -1,5 +1,6 @@
 import { sendMessage } from './publisher';
 import { startConsumer } from './consumers';
+import { closeRabbit } from './connection';
 import {
   getDefaultQueueConfig,
   getDefaultConsumerConfig, 
@@ -19,4 +20,5 @@ export default {
   getDefaultQueueConfig,
   getDefaultConsumerConfig,
   exchangeTypes,
+  closeRabbit,
 };
