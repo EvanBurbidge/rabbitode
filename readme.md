@@ -16,8 +16,9 @@ I reccomend docker for local development.
 ### Sending Messages
 
 **Direct**
- 
+
 ```javascript
+const { sendMessage } = require('rabbitode/lib/sendMessage');
 await sendMessage({
   messageConfig: {
       exchangeName: 'direct_test_exchange',

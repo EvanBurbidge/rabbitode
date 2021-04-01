@@ -8,6 +8,7 @@ import {
   getOfflineQueue,
 } from './offline'
 import { decodeToJson, decodeToString } from './encoding'
+import * as exchangeTypes from './exchangeTypes';
 
 export default {
   sendMessage,
@@ -17,4 +18,5 @@ export default {
   getOfflineQueue,
   getDefaultQueueConfig,
   getDefaultConsumerConfig,
+  exchangeTypes,
 };
