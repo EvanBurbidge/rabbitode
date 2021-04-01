@@ -21,7 +21,7 @@ export const publishMessageToQueue = async ({
   routingKey,
   content,
   exchangeType,
-  publishCallback,
+  publishCallback = t => {},
 }: SendPublishMessageProps) => {
   Logger.Log('publishing message');
   try {
@@ -76,7 +76,7 @@ export const sendMessage = async ({
   configs = baseConfig,
   connectionOptions,
   connectionUrl,
-  publishCallback
+  publishCallback = t => {}
 }: SendMessageProps): Promise<boolean> => {
   const { 
     exchangeName,

@@ -62,7 +62,7 @@ export interface SendMessageProps {
   configs?: any;
   connectionOptions?: any;
   connectionUrl: string;
-  publishCallback?:(t:PublishCallbackInterface) => any;
+  publishCallback:(t:PublishCallbackInterface) => any;
 }
 
 export interface HandlePublishErrorProps extends PublishCallbackInterface{
@@ -73,5 +73,5 @@ export interface SendPublishMessageProps extends MqExchangeMessage{
   channel: any;
   configs: any;
   exchangeType: string;
-  publishCallback(t:PublishCallbackInterface): any;
+  publishCallback: (t: any) => any;
 }
