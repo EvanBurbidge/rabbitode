@@ -242,6 +242,9 @@ queue.forEach(config => {
   - Total removal of original Rabbitode class
   - Added tests to ensure methods call as required
   - More indepth types and logging
+
+### V2 Docs
+[Read here](https://github.com/EvanBurbidge/rabbitode/blob/master/readme-old.md)
 ## Copyright
 Copyright 2021 Evan Burbidge
 
