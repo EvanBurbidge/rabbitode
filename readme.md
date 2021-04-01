@@ -18,7 +18,10 @@ I reccomend docker for local development.
 **Direct**
 
 ```javascript
+const { DIRECT } = require('rabbitode/lib/exchangeTypes');
 const { sendMessage } = require('rabbitode/lib/sendMessage');
+const { getDefaultQueueConfig } = require('rabbitode/lib/utils');
+
 await sendMessage({
   messageConfig: {
       exchangeName: 'direct_test_exchange',
@@ -27,9 +30,9 @@ await sendMessage({
         message: `this is a test message for direct connection`
       }
   },
-  exchangeType: 'direct', // direct, fanout, exchange are all available types
+  exchangeType: DIRECT, // direct, fanout, exchange are all available types
   connectionUrl: 'amqp://localhost',
-  configs: {},
+  configs: getDefaultQueueConfig(),
   connectionOptions: {},
   publishCallback: () => {
     // something here
@@ -40,6 +43,10 @@ await sendMessage({
 **Fanout**
  
 ```javascript
+const { FANOUT } = require('rabbitode/lib/exchangeTypes');
+const { sendMessage } = require('rabbitode/lib/sendMessage');
+const { getDefaultQueueConfig } = require('rabbitode/lib/utils');
+
 await sendMessage({
   messageConfig: {
       exchangeName: 'fanout_test_exchange',
@@ -48,9 +55,9 @@ await sendMessage({
           message: `this is a test message for direct stuff ${count}`
       }
   },
-  exchangeType: 'fanout',
+  exchangeType: FANOUT,
   connectionUrl: 'amqp://localhost',
-  configs: {}, // replace this with queue configs from amqplib
+  configs: getDefaultQueueConfig(), // replace this with queue configs from amqplib
   connectionOptions: {},
   publishCallback: () => {
     // something here
@@ -60,6 +67,9 @@ await sendMessage({
 **Topic**
  
 ```javascript
+const { TOPIC } = require('rabbitode/lib/exchangeTypes');
+const { sendMessage } = require('rabbitode/lib/sendMessage');
+const { getDefaultQueueConfig } = require('rabbitode/lib/utils');
 await sendMessage({
   messageConfig: {
       exchangeName: 'topic_test_exchange',
@@ -68,9 +78,12 @@ await sendMessage({
           message: `this is a test message for direct stuff ${count}`
       }
   },
-  exchangeType: 'topic',
+  exchangeType: TOPIC,
   connectionUrl: 'amqp://localhost',
-  configs: {}, // replace this with queue configs from amqplib
+  configs: {
+    ...getDefaultQueueConfig(),
+    somethingElse: true,
+  }, // replace this with queue configs from amqplib
   connectionOptions: {},
   publishCallback: () => {
     // something here
