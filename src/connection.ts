@@ -6,7 +6,15 @@ export const startRabbit = (connectionUrl: string, options: ConnectionOptions): 
 
 export const closeRabbit = async (connection: Connection, channel: Channel): Promise<void> => {
   Logger.Log('closing channel');
-  await channel.close();
-  Logger.Log('closing connection');
-  await connection.close();
+  try {
+    await channel.close();
+  } catch (error) {
+    return Promise.reject(error);
+  }
+  try {
+    Logger.Log('closing connection');
+    await connection.close();
+  } catch (closeError) {
+    return Promise.reject(closeError);
+  }
 }

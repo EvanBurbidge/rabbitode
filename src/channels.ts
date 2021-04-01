@@ -11,17 +11,22 @@ export const getNewChannel = async (
     configs,
   }: CreateChannelConfig
 ): Promise<Channel> => {
-  const channel: Channel = await conn.createConfirmChannel();
-  await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
-  return channel;
+  try {
+    const channel: Channel = await conn.createConfirmChannel();
+    await channel.assertExchange(exchangeName, exchangeType, { ...configs.exchange });
+    return channel;
+  } catch (err) {
+    return Promise.reject();
+  }
+  
 }
 
-export const handleCreateChannel = (
+export const handleCreateChannel = async (
   queueConfig: ConsumerConfig,
   connectionUrl: string,
   connectionOptions: any,
   configs: any,
-): Promise<CreateChannelReturn> => new Promise(async (resolve, reject) => {
+): Promise<CreateChannelReturn> => {
   const {
     exchangeName,
     exchangeType,
@@ -29,12 +34,12 @@ export const handleCreateChannel = (
   try {
     const conn: Connection = await startRabbit(connectionUrl, connectionOptions);
     const channel: Channel = await getNewChannel(conn, { exchangeName, exchangeType, configs });
-    resolve({
+    return {
       conn,
       channel,
-    });
+    };
   } catch (error) {
     Logger.Log(`channel connection error ${error}`, 'error');
-    reject();
+    return Promise.reject();
   }
-})
+}

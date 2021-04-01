@@ -36,7 +36,7 @@ export const startConsumer = async ({
   const [queueErr, queue]: any = await to(channel.assertQueue(queueName, { ...configs.queue }));
   if (queueErr) {
     Logger.Log(`issue with asseting queue ${queueErr}`);
-    return false;
+    return Promise.reject(false);
   }
   if (Boolean(topics.length)) {
     await mapTopicsToQueue({
@@ -49,18 +49,18 @@ export const startConsumer = async ({
     const [bindErr] = await to(channel.bindQueue(queue.queue, exchangeName, queue.queue));
     if (bindErr) {
       Logger.Log(`problem binding to queue ${bindErr}`);
-      return false;
+      return Promise.reject(false);
     }
   }
   const [prefetchErr] = await to(channel.prefetch(prefetchAmount));
   if (prefetchErr) {
     Logger.Log(`something went wrong with prefetching ${prefetchErr}`);
-    return false;
+    return Promise.reject(false);
   }
   const [consumeErr] = await to(channel.consume(queue.queue, consumerCallback(channel), { ...configs.consumer }));
   if (consumeErr) {
     Logger.Log(`something went wrong with consuming ${consumeErr}`);
-    return false;
+    return Promise.reject(false);
   }
   return {
     channel, conn

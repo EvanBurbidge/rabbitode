@@ -8,7 +8,6 @@ import { startRabbit, closeRabbit } from './connection';
 import {
   SendMessageProps,
   SendPublishMessageProps,
-  CreateChannelReturn
 } from './interfaces';
 import { Connection } from 'amqplib';
 
@@ -54,21 +53,6 @@ export const publishMessageToQueue = async ({
  * @property {String} exchangeType - the type of exchange we want
  * @property {String} connectionUrl - the connection url we want
  * @property {Array} topics - the topics we want to subscibe to
- * @example
- * const { conn, channel } = await sendMessage({
- *   messageConfig: {
- *       exchangeName: 'direct_test_exchange',
- *       routingKey: `direct_test_queue`,
- *       content: {
- *         message: `this is a test message for direct stuff ${count}`
- *       }
- *   },
- *   exchangeType: 'direct',
- *   connectionUrl: 'amqp://localhost',
- *   configs: {},
- *   connectionOptions: {},
- * });
- * await closeRabbit(conn, channel);
  * */
 export const sendMessage = async ({
   messageConfig,
@@ -94,7 +78,7 @@ export const sendMessage = async ({
       err: channelErr,
       content:bufferIfy(content),
     });
-    return false;
+    return Promise.reject(false);
   }
   Logger.Log('channel established');
   try {
@@ -116,7 +100,7 @@ export const sendMessage = async ({
       err: publishErr,
       content:bufferIfy(content),
     });
-    return false;
+    return Promise.reject(false);
   }
   try {
     await closeRabbit(conn, channel);
@@ -129,7 +113,7 @@ export const sendMessage = async ({
       err: closeError,
       content:bufferIfy(content),
     });
-    return false;
+    return Promise.reject(false);
   }
   return true;
 }
