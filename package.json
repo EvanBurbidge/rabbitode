@@ -1,6 +1,6 @@
 {
   "name": "rabbitode",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "A client wrapper to allow the usage of rabbitmq, amqplib with nodejs",
   "main": "dist/rabbitode.min.js",
   "module": "dist/rabbitode.es5.js",
