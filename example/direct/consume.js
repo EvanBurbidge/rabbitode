@@ -1,8 +1,9 @@
 const { startConsumer } = require('../../lib/consumers');
+const { decodeToJson, decodeToString } = require('../../lib/encoding');
 
 const handleConsume = channel => msg => {
-  console.log(rabbitInterface.decodeToString(msg));
-  console.log(rabbitInterface.decodeToJson(msg));
+  console.log(decodeToString(msg));
+  console.log(decodeToJson(msg));
   channel.ack(msg);
 };
 

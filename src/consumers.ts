@@ -1,9 +1,8 @@
 import to from 'await-to-js';
-import { getNewChannel, handleCreateChannel } from './channels';
-import { startRabbit } from './connection';
-import { rabbitLogger, getDefaultConsumerConfig } from './utils';
+import { rabbitLogger, } from './logger';
+import { handleCreateChannel } from './channels';
+import { getDefaultConsumerConfig } from './utils';
 import { StartConsumerProps, MapTopicsToQueueProps, CreateChannelConfig, CreateChannelReturn } from './interfaces';
-import { Connection } from 'amqplib';
 
 const baseConfig = getDefaultConsumerConfig();
 

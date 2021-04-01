@@ -1,6 +1,6 @@
-import { rabbitLogger } from './utils';
+import { rabbitLogger } from './logger';
 
-interface Message {
+export interface Message {
   content: any;
 }
 

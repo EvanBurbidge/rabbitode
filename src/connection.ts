@@ -1,6 +1,6 @@
 import { Channel, connect, Connection } from 'amqplib';
 import { ConnectionOptions } from 'tls';
-import { rabbitLogger } from './utils'
+import { rabbitLogger } from './logger'
 
 export const startRabbit = (connectionUrl: string, options: ConnectionOptions): Promise<Connection> => connect(connectionUrl, options);
 

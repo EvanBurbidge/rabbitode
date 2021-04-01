@@ -1,4 +1,4 @@
-import { rabbitLogger } from './utils';
+import { rabbitLogger } from './logger';
 import { addToOfflineQueue } from './offline';
 import { HandlePublishErrorProps } from './interfaces'
 

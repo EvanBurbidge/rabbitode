@@ -1,12 +1,14 @@
 import to from 'await-to-js';
-import { rabbitLogger, getDefaultConsumerConfig } from './utils';
+import { rabbitLogger } from './logger';
 import { bufferIfy } from './encoding';
 import { getNewChannel } from './channels';
-import { startRabbit, closeRabbit } from './connection';
+import { getDefaultConsumerConfig } from './utils';
 import { handlePublishError } from './errorHandling';
+import { startRabbit, closeRabbit } from './connection';
 import {
   SendMessageProps,
   SendPublishMessageProps,
+  CreateChannelReturn
 } from './interfaces';
 import { Connection } from 'amqplib';
 
@@ -81,6 +83,7 @@ export const sendMessage = async ({
     content,
     routingKey
   } = messageConfig;
+  rabbitLogger('starting publisher');
   const conn: Connection = await startRabbit(connectionUrl, connectionOptions);
   const [channelErr, channel]: any = await to(getNewChannel(conn, { exchangeName , exchangeType, configs }));
   if (channelErr) {
@@ -93,15 +96,40 @@ export const sendMessage = async ({
     });
     return false;
   }
-  await publishMessageToQueue({
-    channel,
-    configs,
-    routingKey,
-    exchangeType,
-    exchangeName,
-    publishCallback,
-    content: bufferIfy(content),
-  });
-  await closeRabbit(conn, channel);
+  rabbitLogger('channel established');
+  try {
+    await publishMessageToQueue({
+      channel,
+      configs,
+      routingKey,
+      exchangeType,
+      exchangeName,
+      publishCallback,
+      content: bufferIfy(content),
+    });
+    rabbitLogger('message published');
+  } catch (publishErr) {
+    handlePublishError({
+      routingKey,
+      exchangeType,
+      exchangeName,
+      err: publishErr,
+      content:bufferIfy(content),
+    });
+    return false;
+  }
+  try {
+    await closeRabbit(conn, channel);
+    rabbitLogger('connection closed');
+  } catch (closeError) {
+    handlePublishError({
+      routingKey,
+      exchangeType,
+      exchangeName,
+      err: closeError,
+      content:bufferIfy(content),
+    });
+    return false;
+  }
   return true;
 }

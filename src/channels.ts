@@ -1,5 +1,5 @@
 import { Channel, Connection } from "amqplib";
-import { rabbitLogger } from './utils';
+import { rabbitLogger } from './logger';
 import { startRabbit } from './connection';
 import { CreateChannelConfig, ConsumerConfig, CreateChannelReturn } from "./interfaces";
 

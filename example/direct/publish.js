@@ -15,6 +15,9 @@ setInterval(() => {
     },
     exchangeType: 'direct',
     connectionUrl: 'amqp://localhost',
+    publishCallback: (done) => {
+      console.log(done);
+    }
   })
   count++;
 }, 5000);
