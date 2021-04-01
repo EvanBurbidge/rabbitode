@@ -1,4 +1,4 @@
-import { Channel } from "amqplib";
+import { Channel, Connection } from "amqplib";
 
 interface BaseExchange {
   exchangeName: string;
@@ -35,6 +35,11 @@ export interface ConsumerConfig extends BaseExchange {
 
 export interface CreateChannelConfig extends BaseExchange {
   configs: any;
+}
+
+export interface CreateChannelReturn {
+  conn: Connection;
+  channel: Channel
 }
 
 export interface StartConsumerProps {

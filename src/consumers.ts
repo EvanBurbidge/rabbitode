@@ -1,8 +1,8 @@
 import to from 'await-to-js';
-import { getNewChannel } from './channels';
+import { getNewChannel, handleCreateChannel } from './channels';
 import { startRabbit } from './connection';
 import { rabbitLogger, getDefaultConsumerConfig } from './utils';
-import { StartConsumerProps, MapTopicsToQueueProps } from './interfaces';
+import { StartConsumerProps, MapTopicsToQueueProps, CreateChannelConfig, CreateChannelReturn } from './interfaces';
 import { Connection } from 'amqplib';
 
 const baseConfig = getDefaultConsumerConfig();
@@ -26,19 +26,14 @@ export const startConsumer = async ({
   prefetchAmount = 10,
 }: StartConsumerProps
 ): Promise<boolean> => {
-
   const {
     exchangeName,
-    exchangeType,
     queueName,
     consumerCallback,
   } = queueConfig;
-  const conn: Connection = await startRabbit(connectionUrl, connectionOptions);
-  const [channelErr, channel]: any = await to(getNewChannel(conn, { exchangeName, exchangeType, configs }));
-  if (channelErr) {
-    rabbitLogger(`channel connection error ${channelErr}`, 'error');
-    return false;
-  }
+  
+  const { channel }: CreateChannelReturn = await handleCreateChannel(queueConfig, connectionUrl, connectionOptions, configs);
+
   const [queueErr, queue]: any = await to(channel.assertQueue(queueName, { ...configs.queue }));
   if (queueErr) {
     rabbitLogger(`issue with asseting queue ${queueErr}`);

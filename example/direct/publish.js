@@ -1,18 +1,20 @@
-let {RabbitMqInterface} = require('../../dist/rabbitode.min');
+const { sendMessage } = require('../../lib/publisher');
 
-const rabbitInterface = new RabbitMqInterface();
+console.log(sendMessage);
 
 let count = 0;
 
 setInterval(() => {
+  sendMessage({
+    messageConfig: {
+      exchangeName: 'direct_test_exchange',
+      routingKey: `direct_test_queue`,
+      content: {
+        message: `this is a test message for direct stuff ${count}`
+      }
+    },
+    exchangeType: 'direct',
+    connectionUrl: 'amqp://localhost',
+  })
   count++;
-  console.log(`publishing`);
-  rabbitInterface.sendDirect({
-    exchangeName: 'direct_test_exchange',
-    routingKey: `direct_test_queue`,
-    content: {
-      message: `this is a test message for direct stuff ${count}`
-    }
-  });
-},  1000);
-
+}, 5000);

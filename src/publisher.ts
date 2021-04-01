@@ -1,14 +1,16 @@
 import to from 'await-to-js';
-import { rabbitLogger } from './utils';
+import { rabbitLogger, getDefaultConsumerConfig } from './utils';
 import { bufferIfy } from './encoding';
 import { getNewChannel } from './channels';
-import { startRabbit } from './connection';
+import { startRabbit, closeRabbit } from './connection';
 import { handlePublishError } from './errorHandling';
 import {
   SendMessageProps,
   SendPublishMessageProps,
 } from './interfaces';
 import { Connection } from 'amqplib';
+
+const baseConfig = getDefaultConsumerConfig();
 
 export const publishMessageToQueue = async ({
   channel,
@@ -69,11 +71,11 @@ export const publishMessageToQueue = async ({
 export const sendMessage = async ({
   messageConfig,
   exchangeType,
-  configs,
+  configs = baseConfig,
   connectionOptions,
   connectionUrl,
   publishCallback
-}: SendMessageProps): Promise<any> => {
+}: SendMessageProps): Promise<boolean> => {
   const { 
     exchangeName,
     content,
@@ -100,7 +102,6 @@ export const sendMessage = async ({
     publishCallback,
     content: bufferIfy(content),
   });
-  return {
-    channel, conn,
-  };
+  await closeRabbit(conn, channel);
+  return true;
 }
