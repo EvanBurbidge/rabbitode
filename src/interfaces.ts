@@ -1,8 +1,26 @@
+import { Channel } from "amqplib";
 
+interface BaseExchange {
+  exchangeName: string;
+  exchangeType: string;
+}
 export interface MqExchangeMessage {
   exchangeName: string;
   routingKey: string;
   content: Buffer | string;
+}
+
+export interface MapTopicsToQueueProps {
+  channel: Channel;
+  queue: any;
+  exchangeName: string;
+  topics: string[];
+}
+
+export interface MqMessageError {
+  exchangeType: string
+  message: MqExchangeMessage;
+  isPublished: boolean;
 }
 
 export interface MqTaskMessage {
@@ -10,11 +28,13 @@ export interface MqTaskMessage {
   content: Buffer | string;
 }
 
-export interface ConsumerConfig {
-  exchangeName: string;
-  exchangeType: string;
+export interface ConsumerConfig extends BaseExchange {
   queueName: string;
   consumerCallback: (x: any) => (y: any) => void;
+}
+
+export interface CreateChannelConfig extends BaseExchange {
+  configs: any;
 }
 
 export interface StartConsumerProps {

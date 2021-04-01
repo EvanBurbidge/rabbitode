@@ -1,6 +1,8 @@
-export const offlineQueue = [];
+import { MqMessageError } from "./interfaces";
 
-export function addToOfflineQueue(message) {
+export const offlineQueue: MqMessageError[] = [];
+
+export function addToOfflineQueue(message: MqMessageError) {
   offlineQueue.push(message);
 };
 

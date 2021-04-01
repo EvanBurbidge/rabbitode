@@ -1,16 +1,13 @@
-export async function asyncForEach(array, callback) {
+type forEachCb = (i: any, idx:number, array: any[]) => Promise<any>;
+
+export async function asyncForEach(array: any[], callback:forEachCb) {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
 }
-/**
-* @method
-* @description
-*  This will either log or not log messages depending
-*  on a debug flag set by users
-* */
-export function rabbitLogger(message: string, level: string = 'log'): void {
- if (this.debug) {
+
+export function rabbitLogger(message: string, level: string = 'log', debug?: boolean): void {
+ if (debug) {
    switch (level) {
      case 'warning':
        console.warn(`[Rabbitode] ${message}`);

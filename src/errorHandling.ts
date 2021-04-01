@@ -2,7 +2,6 @@ import { rabbitLogger } from './utils';
 import { addToOfflineQueue } from './offline';
 import { HandlePublishErrorProps } from './interfaces'
 
-
 export const handlePublishError = ({
   err,
   routingKey,

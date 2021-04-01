@@ -1,19 +1,11 @@
-import { Channel } from 'amqplib';
 import to from 'await-to-js';
 import { getNewChannel } from './channels';
 import { startRabbit } from './connection';
-import { StartConsumerProps } from './interfaces';
 import { rabbitLogger, getDefaultConsumerConfig } from './utils';
-
+import { StartConsumerProps, MapTopicsToQueueProps } from './interfaces';
+import { Connection } from 'amqplib';
 
 const baseConfig = getDefaultConsumerConfig();
-
-interface MapTopicsToQueueProps {
-  channel: Channel;
-  queue: any;
-  exchangeName: string;
-  topics: string[];
-}
 
 export const mapTopicsToQueue = ({
   channel,
@@ -41,15 +33,10 @@ export const startConsumer = async ({
     queueName,
     consumerCallback,
   } = queueConfig;
-
-  const [connErr, conn] = await to(startRabbit(connectionUrl, connectionOptions));
-  if (connErr) {
-    rabbitLogger(`consumer connection error ${connErr}`, 'error');
-    return false;
-  }
-  const [channelErr, channel] = await to(getNewChannel(conn, { exchangeName, exchangeType, configs }));
+  const conn: Connection = await startRabbit(connectionUrl, connectionOptions);
+  const [channelErr, channel]: any = await to(getNewChannel(conn, { exchangeName, exchangeType, configs }));
   if (channelErr) {
-    rabbitLogger(`channel connection error ${connErr}`, 'error');
+    rabbitLogger(`channel connection error ${channelErr}`, 'error');
     return false;
   }
   const [queueErr, queue]: any = await to(channel.assertQueue(queueName, { ...configs.queue }));

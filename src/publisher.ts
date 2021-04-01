@@ -1,6 +1,6 @@
 import to from 'await-to-js';
 import { rabbitLogger } from './utils';
-import { bufferIfy } from './encodings';
+import { bufferIfy } from './encoding';
 import { getNewChannel } from './channels';
 import { startRabbit } from './connection';
 import { handlePublishError } from './errorHandling';
