@@ -5,7 +5,8 @@ Rabbitode is a probject created to provide a simple interface in order to work w
 RabbitMQ  is an events broker that allows us to send a recieve events between producers and consumers via an event queue.
 
 # Installation
-- Installation via npm `npm install rabbitode`
+- Installation via npm `npm install rabbitode -S`
+- Installation via yarn `yarn add rabbitode`
 
 ## Requirements
 In order for this project to run you must have a working instance of rabbitmq on your machine or server.
